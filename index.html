@@ -73,6 +73,8 @@ td b{color:#111827}
 .fab-mic:hover{transform:scale(1.05);box-shadow:0 15px 35px rgba(211,165,55,0.5)}
 .fab-mic.listening{animation:pulse-fab 1.5s infinite;background:var(--danger);color:white}
 @keyframes pulse-fab{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0.7)}70%{transform:scale(1);box-shadow:0 0 0 20px rgba(220,38,38,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--danger);animation:blinkDot 1s infinite}
+@keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.15}}
 .voice-text{padding:16px;border:1px dashed #d1d5db;border-radius:12px;background:#f9fafb; font-size:15px; margin-bottom:12px}
 .list{display:grid;gap:12px}
 .list-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
@@ -203,8 +205,10 @@ td b{color:#111827}
     <div class="modal-head" style="justify-content:center; border-bottom:none; margin-bottom:10px">
       <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Di tu operación completa...</h3>
     </div>
-    <p class="muted" style="margin-bottom:20px">Habla sin prisa. El sistema esperará a que termines.</p>
-    
+    <p class="muted" style="margin-bottom:14px">Habla sin prisa. El sistema esperará a que termines.</p>
+    <div id="voiceLiveDot" style="display:none; align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:800; color:var(--danger); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px">
+      <span class="live-dot"></span> Captando audio en vivo
+    </div>
     <div id="voiceResultBox" style="min-height:90px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f9fafb; border-radius:12px; padding:16px; border:2px dashed #d1d5db">
       <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Esperando voz...</p>
     </div>
@@ -395,6 +399,21 @@ function resetSilenceTimer(){
  }, SILENCE_MS);
 }
 
+function escapeHtml(str){
+ return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function updateTranscriptView(){
+ const box = document.getElementById('voiceTranscript');
+ const combined = (finalTranscript + interimBuffer).trim();
+ if(combined){
+  box.innerHTML = `<span style="color:#111827">${escapeHtml(finalTranscript)}</span><span style="color:#9ca3af">${escapeHtml(interimBuffer)}</span>`;
+ } else {
+  box.textContent = 'Escuchando... di tu operación';
+ }
+}
+let interimBuffer = '';
+
 if(SpeechRecognition){
  recognition = new SpeechRecognition();
  recognition.lang = 'es-CO';
@@ -405,44 +424,84 @@ if(SpeechRecognition){
  recognition.onstart = () => {
   listening = true;
   finalTranscript = '';
+  interimBuffer = '';
   document.getElementById('fabMic').classList.add('listening');
-  document.getElementById('voiceStatusTitle').textContent = '🎙️ Te estoy escuchando...';
-  document.getElementById('voiceTranscript').textContent = 'Di tu operación completa de corrido...';
+  document.getElementById('voiceLiveDot').style.display = 'none';
+  document.getElementById('voiceStatusTitle').textContent = '🔌 Activando micrófono...';
+  document.getElementById('voiceTranscript').textContent = 'Esperando permiso del navegador...';
   document.getElementById('voicePreview').hidden = true;
   openModal('voiceModal');
   resetSilenceTimer();
  };
 
+ // Etapas de diagnóstico: así sabes exactamente en dónde se traba
+ recognition.onaudiostart = () => {
+  document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo, esperando que hables...';
+  document.getElementById('voiceTranscript').textContent = 'Habla ahora, de corrido...';
+ };
+ recognition.onsoundstart = () => {
+  document.getElementById('voiceStatusTitle').textContent = '👂 Detecté sonido...';
+ };
+ recognition.onspeechstart = () => {
+  document.getElementById('voiceStatusTitle').textContent = '🗣️ Escuchando tu voz...';
+  document.getElementById('voiceLiveDot').style.display = 'flex';
+ };
+ recognition.onspeechend = () => {
+  document.getElementById('voiceStatusTitle').textContent = '⏳ Verificando si terminaste la frase...';
+  document.getElementById('voiceLiveDot').style.display = 'none';
+ };
+
  recognition.onresult = e => {
-  let interim = '';
+  interimBuffer = '';
   for(let i = e.resultIndex; i < e.results.length; i++){
    const transcript = e.results[i][0].transcript;
    if(e.results[i].isFinal){
     finalTranscript += transcript + ' ';
    } else {
-    interim += transcript;
+    interimBuffer += transcript;
    }
   }
-  document.getElementById('voiceTranscript').textContent = (finalTranscript + interim).trim() || 'Escuchando...';
+  updateTranscriptView();
   resetSilenceTimer(); // hay actividad de voz: seguimos dándole tiempo al usuario
  };
 
  recognition.onerror = e => {
+  console.warn('SpeechRecognition error:', e.error);
   if(e.error === 'no-speech' || e.error === 'aborted'){
-   // no cortamos toda la sesión por un silencio momentáneo
+   // silencio momentáneo: no cortamos toda la sesión
    return;
   }
   listening = false;
   clearTimeout(silenceTimer);
   document.getElementById('fabMic').classList.remove('listening');
-  document.getElementById('voiceStatusTitle').textContent = '❌ No se detectó voz';
-  document.getElementById('voiceTranscript').textContent = 'Inténtalo de nuevo con el botón de abajo.';
+  document.getElementById('voiceLiveDot').style.display = 'none';
+  let title = '❌ No se pudo reconocer tu voz';
+  let msg = 'Inténtalo de nuevo con el botón de abajo.';
+  if(e.error === 'not-allowed' || e.error === 'permission-denied'){
+   title = '🚫 Permiso de micrófono bloqueado';
+   msg = 'Entra a la configuración del sitio (icono de candado en la barra de direcciones) y permite el acceso al micrófono.';
+  } else if(e.error === 'audio-capture'){
+   title = '🎤 No se detectó ningún micrófono';
+   msg = 'Verifica que tu dispositivo tenga un micrófono disponible y que ninguna otra app lo esté usando.';
+  } else if(e.error === 'network'){
+   title = '📶 Error de conexión';
+   msg = 'El reconocimiento de voz necesita internet. Verifica tu conexión y vuelve a intentar.';
+  } else if(e.error === 'service-not-allowed'){
+   title = '⚠️ Servicio de voz no disponible';
+   msg = 'Este navegador bloqueó el servicio de voz aquí. Asegúrate de abrir la página con https:// (no como archivo local).';
+  } else if(e.error === 'language-not-supported'){
+   title = '⚠️ Idioma no soportado';
+   msg = 'Tu navegador no soporta español de Colombia para voz. Prueba con Chrome actualizado.';
+  }
+  document.getElementById('voiceStatusTitle').textContent = title;
+  document.getElementById('voiceTranscript').textContent = msg;
  };
 
  recognition.onend = () => {
   listening = false;
   clearTimeout(silenceTimer);
   document.getElementById('fabMic').classList.remove('listening');
+  document.getElementById('voiceLiveDot').style.display = 'none';
   const text = finalTranscript.trim();
   if(text){
    document.getElementById('voiceTranscript').textContent = text;
@@ -450,9 +509,17 @@ if(SpeechRecognition){
    processVoiceCommand(text);
   }
  };
+
+ // Aviso temprano si la página no está en un contexto seguro (el micrófono no funciona sin https)
+ if(!window.isSecureContext){
+  console.warn('ContaVoz: esta página no está en un contexto seguro (https). El micrófono probablemente será bloqueado por el navegador.');
+  document.getElementById('fabMic').title = 'El micrófono requiere https:// — ábrelo con un servidor seguro';
+  setTimeout(() => showToast('⚠️ Abre esta página con https:// para poder usar el micrófono'), 800);
+ }
 } else {
  document.getElementById('fabMic').onclick = () => alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
 }
+
 
 if(recognition){
  document.getElementById('fabMic').onclick = () => {
