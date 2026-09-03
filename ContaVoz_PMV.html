@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContaVoz — Gestión inteligente para microempresas</title>
+<meta name="description" content="ContaVoz: PMV para registrar ingresos, compras, gastos, inventario y reportes mediante voz.">
+<style>
+:root{
+  --bg:#f5f7fb; --surface:#fff; --surface2:#eef2f7; --text:#172033; --muted:#657087;
+  --primary:#244a3a; --primary2:#2f6b50; --accent:#d9b45b; --danger:#bd4654; --ok:#25855a;
+  --border:#dfe5ec; --shadow:0 14px 40px rgba(19,34,54,.08); --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:linear-gradient(180deg,#18382c,#244a3a);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}
+.brand{display:flex;gap:12px;align-items:center;padding:8px 10px 22px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--accent);color:#18382c;display:grid;place-items:center;font-size:23px;font-weight:900;box-shadow:0 8px 22px #0002}
+.brand h1{font-size:20px;margin:0}.brand small{opacity:.72}
+.nav{display:grid;gap:7px}.nav button{border:0;background:transparent;color:#d9e6df;text-align:left;padding:12px 13px;border-radius:12px;display:flex;align-items:center;gap:11px;font-weight:700}
+.nav button.active,.nav button:hover{background:#ffffff16;color:#fff}
+.sidebar-footer{position:absolute;bottom:18px;left:16px;right:16px;padding:14px;border:1px solid #ffffff1a;border-radius:14px;background:#ffffff0c;font-size:12px;color:#d9e6df}
+.content{flex:1;padding:26px;max-width:1500px;margin:auto;width:100%}
+.topbar{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:20px}
+.topbar h2{margin:0;font-size:28px}.topbar p{margin:5px 0 0;color:var(--muted)}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary2)}
+.btn-light{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-gold{background:var(--accent);color:#18382c}
+.btn-danger{background:#fff1f2;color:var(--danger);border:1px solid #ffd6da}
+.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr);margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--radius);padding:18px}
+.kpi{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.kpi-icon{width:43px;height:43px;border-radius:13px;background:var(--surface2);display:grid;place-items:center;font-size:20px}.kpi small{color:var(--muted);font-weight:700}.kpi strong{display:block;font-size:26px;margin-top:4px}
+.cols-2{grid-template-columns:1.2fr .8fr}.cols-3{grid-template-columns:repeat(3,1fr)}
+.section{display:none}.section.active{display:block}
+.hero{background:linear-gradient(120deg,#18382c,#356f54);color:white;border:0;overflow:hidden;position:relative}
+.hero:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;border:45px solid #ffffff0a;right:-75px;top:-75px}
+.hero h3{margin:0 0 7px;font-size:24px}.hero p{margin:0;color:#dce9e2;max-width:720px}
+.hero-actions{margin-top:18px;display:flex;gap:9px;flex-wrap:wrap}
+.hero .btn-light{background:#fff;color:#18382c;border:0}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.badge.ok{background:#e8f7ef;color:var(--ok)}.badge.warn{background:#fff6dc;color:#9b741c}.badge.danger{background:#fff0f1;color:var(--danger)}.badge.info{background:#eaf2ff;color:#3563a8}
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+.search{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:230px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 11px;background:#fff}
+.field.full{grid-column:1/-1}.form-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
+.modal{display:none;position:fixed;inset:0;background:#10182899;align-items:center;justify-content:center;padding:20px;z-index:20}.modal.open{display:flex}.modal-box{background:#fff;border-radius:20px;width:min(650px,100%);max-height:92vh;overflow:auto;padding:20px}.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.modal-head h3{margin:0}.close{border:0;background:#f1f4f8;width:36px;height:36px;border-radius:50%}
+.voice-box{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.mic{width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);font-size:25px}.mic.listening{animation:pulse 1s infinite}@keyframes pulse{50%{transform:scale(1.08);box-shadow:0 0 0 12px #d9b45b26}}
+.voice-text{padding:15px;border:1px dashed #bbc6d4;border-radius:14px;background:#fbfcfe}.voice-text strong{display:block;margin-bottom:5px}.hint{font-size:12px;color:var(--muted)}
+.list{display:grid;gap:10px}.list-item{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--border);border-radius:13px;padding:12px;background:#fff}
+.bar{height:10px;background:#edf0f4;border-radius:99px;overflow:hidden}.bar > span{display:block;height:100%;background:var(--primary2);border-radius:99px}
+.report-total{font-size:28px;font-weight:900;margin-top:4px}.muted{color:var(--muted)}.empty{text-align:center;padding:35px;color:var(--muted)}
+.toast{position:fixed;right:22px;bottom:22px;background:#172033;color:#fff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow);display:none;z-index:30}.toast.show{display:block}
+.mobile-head{display:none}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .sidebar{display:none}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.content{padding:16px}.kpis{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.topbar{align-items:flex-start}.topbar h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">CV</div><div><h1>ContaVoz</h1><small>Gestión sin complicaciones</small></div>
+    </div>
+    <nav class="nav">
+      <button class="active" data-section="dashboard">🏠 Dashboard</button>
+      <button data-section="ingresos">💰 Ingresos</button>
+      <button data-section="compras">🛒 Compras</button>
+      <button data-section="gastos">💸 Gastos</button>
+      <button data-section="inventario">📦 Inventario</button>
+      <button data-section="reportes">📊 Reportes</button>
+      <button data-section="voz">🎙️ Registrar por voz</button>
+    </nav>
+    <div class="sidebar-footer"><b>PMV — Examen parcial</b><br>Datos de demostración basados en el caso suministrado por la asignatura.</div>
+  </aside>
+
+  <main class="content">
+    <div class="mobile-head"><b>ContaVoz</b><button class="btn btn-light" id="mobileNav">☰</button></div>
+    <div class="topbar">
+      <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Una vista rápida del estado de tu negocio.</p></div>
+      <div class="top-actions">
+        <button class="btn btn-gold" id="voiceTop">🎙️ Registrar por voz</button>
+        <button class="btn btn-light" id="resetBtn">↺ Restaurar demo</button>
+      </div>
+    </div>
+
+    <section id="dashboard" class="section active">
+      <div class="card hero">
+        <h3>Tu negocio habla. ContaVoz organiza.</h3>
+        <p>Registra ventas, compras y gastos hablando naturalmente. El sistema actualiza inventarios, cartera y reportes para ayudarte a decidir mejor.</p>
+        <div class="hero-actions">
+          <button class="btn btn-light" data-action="new-sale">＋ Registrar venta</button>
+          <button class="btn btn-light" data-action="new-purchase">＋ Registrar compra</button>
+          <button class="btn btn-light" data-action="new-expense">＋ Registrar gasto</button>
+        </div>
+      </div>
+      <div class="grid kpis" style="margin-top:16px">
+        <div class="card kpi"><div><small>Ingresos (ventas)</small><strong id="kpiSales">$0</strong><span class="muted">Contado + crédito</span></div><div class="kpi-icon">💰</div></div>
+        <div class="card kpi"><div><small>Costos de venta</small><strong id="kpiCosts">$0</strong><span class="muted">Costo de mercancía</span></div><div class="kpi-icon">🧾</div></div>
+        <div class="card kpi"><div><small>Gastos</small><strong id="kpiExpenses">$0</strong><span class="muted">Operación del negocio</span></div><div class="kpi-icon">💸</div></div>
+        <div class="card kpi"><div><small>Utilidad</small><strong id="kpiProfit">$0</strong><span class="muted">Ingresos − costos − gastos</span></div><div class="kpi-icon">📈</div></div>
+      </div>
+      <div class="grid cols-2">
+        <div class="card"><div class="toolbar"><div><b>Estado del inventario</b><div class="muted">Existencias actuales</div></div><button class="btn btn-light" onclick="go('inventario')">Ver todo</button></div><div id="dashInventory" class="list"></div></div>
+        <div class="card"><div class="toolbar"><div><b>Resumen de cartera</b><div class="muted">Por cobrar y por pagar</div></div><button class="btn btn-light" onclick="go('reportes')">Reportes</button></div><div class="grid cols-2"><div><span class="muted">Por cobrar</span><div class="report-total" id="dashReceivable">$0</div></div><div><span class="muted">Por pagar</span><div class="report-total" id="dashPayable">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:17px 0"><div class="muted">Caja en efectivo</div><div class="report-total" id="dashCash">$0</div></div>
+      </div>
+    </section>
+
+    <section id="ingresos" class="section">
+      <div class="card"><div class="toolbar"><div><b>Ingresos y ventas</b><div class="muted">Registra ventas y abonos de clientes.</div></div><div><button class="btn btn-gold" data-action="new-sale">＋ Nueva venta</button></div></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
+    </section>
+
+    <section id="compras" class="section">
+      <div class="card"><div class="toolbar"><div><b>Compras</b><div class="muted">Cada compra actualiza el stock automáticamente.</div></div><button class="btn btn-gold" data-action="new-purchase">＋ Nueva compra</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div></div>
+    </section>
+
+    <section id="gastos" class="section">
+      <div class="card"><div class="toolbar"><div><b>Gastos</b><div class="muted">Controla los desembolsos del negocio.</div></div><button class="btn btn-gold" data-action="new-expense">＋ Nuevo gasto</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div></div>
+    </section>
+
+    <section id="inventario" class="section">
+      <div class="card"><div class="toolbar"><div><b>Control de inventarios</b><div class="muted">Compras entran y ventas salen del stock automáticamente.</div></div><button class="btn btn-gold" data-action="new-product">＋ Nuevo producto</button></div><div class="grid cols-3" id="inventoryCards"></div></div>
+    </section>
+
+    <section id="reportes" class="section">
+      <div class="grid cols-2">
+        <div class="card"><b>Flujo de caja</b><div class="muted">Entradas y salidas efectivas.</div><div class="grid cols-2" style="margin-top:18px"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:18px 0"><span class="muted">Total en caja</span><div class="report-total" id="rCashTotal">$0</div></div>
+        <div class="card"><b>Estado de resultados</b><div class="muted">Contado y crédito.</div><div class="list" style="margin-top:15px"><div class="list-item"><span>Total ingresos</span><b id="rIncome">$0</b></div><div class="list-item"><span>Total costo de venta</span><b id="rCOGS">$0</b></div><div class="list-item"><span>Total gastos</span><b id="rExpenses">$0</b></div><div class="list-item"><span>Utilidad / pérdida</span><b id="rProfit">$0</b></div></div></div>
+      </div>
+      <div class="grid cols-2" style="margin-top:16px">
+        <div class="card"><b>Cuentas por cobrar</b><div class="muted">Clientes con ventas a crédito.</div><div id="arList" class="list" style="margin-top:14px"></div></div>
+        <div class="card"><b>Cuentas por pagar</b><div class="muted">Compras y obligaciones a crédito.</div><div id="apList" class="list" style="margin-top:14px"></div></div>
+      </div>
+    </section>
+
+    <section id="voz" class="section">
+      <div class="card">
+        <h3 style="margin-top:0">🎙️ Registro inteligente por voz</h3>
+        <p class="muted">Habla de forma natural. Para el PMV se reconocen comandos como los siguientes:</p>
+        <div class="grid cols-3" style="margin:14px 0">
+          <div class="voice-text"><strong>Venta</strong>“Vendí 3 Café Volcán a 31460 en efectivo”</div>
+          <div class="voice-text"><strong>Compra</strong>“Compré 10 Café Finca a 45780 a crédito”</div>
+          <div class="voice-text"><strong>Gasto</strong>“Registrar gasto de agua por 100000”</div>
+        </div>
+        <div class="voice-box">
+          <div class="voice-text"><strong id="voiceStatus">Listo para escuchar</strong><div id="voiceTranscript" class="muted">Pulsa el micrófono y dicta una operación.</div></div>
+          <button id="micBtn" class="mic">🎙️</button>
+        </div>
+        <div style="margin-top:16px" id="voicePreview" class="card" hidden></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3 id="modalTitle">Nueva operación</h3><button class="close" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY='contavoz_state_v1';
+const demoProducts=[
+ {id:'001',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460,expiry:''},
+ {id:'002',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780,expiry:''},
+ {id:'003',name:'Café Mujeres Cafeteras en granos 454gr',stock:50,cost:45780,sale:65780,expiry:''},
+ {id:'004',name:'Café Origen Nariño en granos 454gr',stock:50,cost:45780,sale:65780,expiry:''},
+ {id:'005',name:'Café Colina en grano 454gr',stock:50,cost:36650,sale:56650,expiry:''}
+];
+const today=new Date().toISOString().slice(0,10);
+const demoPurchases=[
+ {id:'p1',date:today,productId:'001',qty:100,total:1146000,payment:'Efectivo',type:'Contado'},
+ {id:'p2',date:today,productId:'002',qty:150,total:6867000,payment:'Nequi',type:'Contado'},
+ {id:'p3',date:today,productId:'003',qty:200,total:9156000,payment:'Nequi',type:'Contado'},
+ {id:'p4',date:today,productId:'004',qty:250,total:11445000,payment:'Crédito',type:'Crédito'},
+ {id:'p5',date:today,productId:'005',qty:300,total:10995000,payment:'Crédito',type:'Crédito'}
+];
+const demoSales=[
+ {id:'s1',date:today,productId:'001',qty:50,total:1573000,payment:'Efectivo',type:'Contado'},
+ {id:'s2',date:today,productId:'002',qty:100,total:6578000,payment:'Nequi',type:'Contado'},
+ {id:'s3',date:today,productId:'003',qty:150,total:9867000,payment:'Nequi',type:'Contado'},
+ {id:'s4',date:today,productId:'004',qty:200,total:13156000,payment:'Nequi',type:'Contado'},
+ {id:'s5',date:today,productId:'005',qty:250,total:14162500,payment:'Crédito',type:'Crédito'}
+];
+const demoExpenses=[
+ ['Agua',100000],['Luz',70000],['Internet',150000],['Nomina',2000000],['Seguridad Social',500000],['Arriendo',2000000],['Útiles de Aseo',50000],['Vigilancia',70000]
+].map((x,i)=>({id:'e'+i,date:today,description:x[0],total:x[1],payment:'Nequi',type:'Contado'}));
+function defaultState(){return {products:structuredClone(demoProducts),purchases:structuredClone(demoPurchases),sales:structuredClone(demoSales),expenses:structuredClone(demoExpenses),customers:[{id:'c1',name:'Cliente crédito - Café Colina'}],suppliers:[{id:'pr1',name:'Proveedor - Origen Nariño'}]}}
+let state=load();
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x||defaultState()}catch(e){return defaultState()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
+function product(id){return state.products.find(p=>p.id===id)}
+function sum(arr,key){return arr.reduce((a,x)=>a+(Number(x[key])||0),0)}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+const pageMeta={
+ dashboard:['Dashboard','Una vista rápida del estado de tu negocio.'],
+ ingresos:['Ingresos','Ventas, abonos y cartera de clientes.'],
+ compras:['Compras','Adquisiciones y actualización del inventario.'],
+ gastos:['Gastos','Desembolsos necesarios para operar.'],
+ inventario:['Inventario','Productos, existencias y alertas de bajo stock.'],
+ reportes:['Reportes','Información financiera para tomar decisiones.'],
+ voz:['Registrar por voz','Convierte una instrucción hablada en una operación.']
+};
+function go(section){
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
+ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===section));
+ document.getElementById('pageTitle').textContent=pageMeta[section][0];
+ document.getElementById('pageSubtitle').textContent=pageMeta[section][1];
+ render();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
+document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
+document.getElementById('voiceTop').onclick=()=>go('voz');
+document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar los datos de demostración? Se perderán los cambios actuales.')){state=defaultState();save();render();showToast('Datos demo restaurados')}})
+
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()})
+
+function action(a){
+ if(a==='new-sale') newSale();
+ if(a==='new-purchase') newPurchase();
+ if(a==='new-expense') newExpense();
+ if(a==='new-product') newProduct();
+}
+function productOptions(){return state.products.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('')}
+function opForm(kind){
+ const isSale=kind==='sale';
+ return `<form id="opForm" class="form-grid">
+  <div class="field full"><label>Producto</label><select id="fProduct" required>${productOptions()}</select></div>
+  <div class="field"><label>Cantidad</label><input id="fQty" type="number" min="1" value="1" required></div>
+  <div class="field"><label>Precio unitario</label><input id="fPrice" type="number" min="0" value="${isSale?state.products[0].sale:state.products[0].cost}" required></div>
+  <div class="field"><label>Forma de pago</label><select id="fPayment"><option>Efectivo</option><option>Nequi</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option></select></div>
+  <div class="field"><label>Tipo</label><select id="fType"><option>Contado</option><option>Crédito</option></select></div>
+  <div class="field"><label>Fecha</label><input id="fDate" type="date" value="${today}"></div>
+  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal()">Cancelar</button><button class="btn btn-primary">${isSale?'Registrar venta':'Registrar compra'}</button></div>
+ </form>`
+}
+function newSale(){openModal('Nueva venta',opForm('sale'));document.getElementById('fProduct').onchange=e=>{const p=product(e.target.value);document.getElementById('fPrice').value=p.sale}}
+function newPurchase(){openModal('Nueva compra',opForm('purchase'));document.getElementById('fProduct').onchange=e=>{const p=product(e.target.value);document.getElementById('fPrice').value=p.cost}}
+function newExpense(){openModal('Nuevo gasto',`<form id="expenseForm" class="form-grid">
+<div class="field full"><label>Descripción</label><input id="eDesc" placeholder="Ej. Agua" required></div>
+<div class="field"><label>Valor</label><input id="eTotal" type="number" min="0" required></div>
+<div class="field"><label>Forma de pago</label><select id="ePayment"><option>Efectivo</option><option>Nequi</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option></select></div>
+<div class="field"><label>Tipo</label><select id="eType"><option>Contado</option><option>Crédito</option></select></div>
+<div class="field"><label>Fecha</label><input id="eDate" type="date" value="${today}"></div>
+<div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal()">Cancelar</button><button class="btn btn-primary">Registrar gasto</button></div></form>`);
+ document.getElementById('expenseForm').onsubmit=e=>{e.preventDefault();state.expenses.unshift({id:'e'+Date.now(),date:eDate.value,description:eDesc.value.trim(),total:+eTotal.value,payment:ePayment.value,type:eType.value});save();closeModal();render();showToast('Gasto registrado')}}
+function newProduct(){openModal('Nuevo producto',`<form id="productForm" class="form-grid">
+<div class="field"><label>Código</label><input id="pId" required></div><div class="field"><label>Nombre</label><input id="pName" required></div>
+<div class="field"><label>Stock inicial</label><input id="pStock" type="number" min="0" value="0"></div><div class="field"><label>Costo unitario</label><input id="pCost" type="number" min="0" value="0"></div>
+<div class="field"><label>Precio venta</label><input id="pSale" type="number" min="0" value="0"></div><div class="field"><label>Próximo vencimiento</label><input id="pExpiry" type="date"></div>
+<div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal()">Cancelar</button><button class="btn btn-primary">Crear producto</button></div></form>`);
+ document.getElementById('productForm').onsubmit=e=>{e.preventDefault();if(product(pId.value))return showToast('Ese código ya existe');state.products.push({id:pId.value.trim(),name:pName.value.trim(),stock:+pStock.value,cost:+pCost.value,sale:+pSale.value,expiry:pExpiry.value});save();closeModal();render();showToast('Producto creado')}}
+document.addEventListener('submit',e=>{
+ if(e.target.id==='opForm'){e.preventDefault();const isSale=document.getElementById('modalTitle').textContent.includes('venta');const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price;if(!p)return;
+  if(isSale && qty>p.stock){showToast('Stock insuficiente');return}
+  if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock-=qty}
+  else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock+=qty}
+  save();closeModal();render();showToast(isSale?'Venta registrada':'Compra registrada')
+ }
+});
+
+function del(type,id){
+ if(!confirm('¿Eliminar este registro?'))return;
+ if(type==='sale'){const x=state.sales.find(v=>v.id===id);if(x)product(x.productId).stock+=x.qty;state.sales=state.sales.filter(v=>v.id!==id)}
+ if(type==='purchase'){const x=state.purchases.find(v=>v.id===id);if(x)product(x.productId).stock-=x.qty;state.purchases=state.purchases.filter(v=>v.id!==id)}
+ if(type==='expense')state.expenses=state.expenses.filter(v=>v.id!==id);
+ save();render();showToast('Registro eliminado')
+}
+function render(){
+ const salesTotal=sum(state.sales,'total'), purchaseTotal=sum(state.purchases,'total'), expTotal=sum(state.expenses,'total');
+ const cogs=state.sales.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), profit=salesTotal-cogs-expTotal;
+ kpiSales.textContent=money(salesTotal);kpiCosts.textContent=money(cogs);kpiExpenses.textContent=money(expTotal);kpiProfit.textContent=money(profit);
+ const receivable=sum(state.sales.filter(x=>x.type==='Crédito'),'total'), payable=sum(state.purchases.filter(x=>x.type==='Crédito'),'total');
+ const cashIn=sum(state.sales.filter(x=>x.payment==='Efectivo'),'total');
+ const cashOut=sum(state.purchases.filter(x=>x.payment==='Efectivo'),'total')+sum(state.expenses.filter(x=>x.payment==='Efectivo'),'total');
+ dashReceivable.textContent=money(receivable);dashPayable.textContent=money(payable);dashCash.textContent=money(cashIn-cashOut);
+ dashInventory.innerHTML=state.products.map(p=>`<div class="list-item"><div><b>${p.name}</b><div class="muted">Código ${p.id}</div></div><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock} unidades</span></div>`).join('');
+ salesBody.innerHTML=state.sales.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('');
+ purchaseBody.innerHTML=state.purchases.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('');
+ expenseBody.innerHTML=state.expenses.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('');
+ inventoryCards.innerHTML=state.products.map(p=>`<div class="card" style="box-shadow:none"><div style="display:flex;justify-content:space-between;gap:8px"><div><b>${p.name}</b><div class="muted">Código ${p.id}</div></div><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock}</span></div><div style="margin-top:14px"><div class="muted">Stock</div><div class="bar" style="margin-top:5px"><span style="width:${Math.min(100,p.stock*2)}%"></span></div></div><div class="muted" style="margin-top:10px">Costo: ${money(p.cost)} · Venta: ${money(p.sale)}</div>${p.stock<=10?'<div class="badge danger" style="margin-top:10px">⚠️ Bajo stock</div>':''}${p.expiry?`<div class="muted" style="margin-top:6px">Vence: ${p.expiry}</div>`:''}</div>`).join('');
+ rCashIn.textContent=money(cashIn);rCashOut.textContent=money(cashOut);rCashTotal.textContent=money(cashIn-cashOut);rIncome.textContent=money(salesTotal);rCOGS.textContent=money(cogs);rExpenses.textContent=money(expTotal);rProfit.textContent=money(profit);
+ arList.innerHTML=receivable?state.sales.filter(x=>x.type==='Crédito').map(x=>`<div class="list-item"><div><b>Venta crédito</b><div class="muted">${product(x.productId).name} · ${x.date}</div></div><b>${money(x.total)}</b></div>`).join(''):'<div class="empty">No hay cuentas por cobrar.</div>';
+ apList.innerHTML=payable?state.purchases.filter(x=>x.type==='Crédito').map(x=>`<div class="list-item"><div><b>Compra a crédito</b><div class="muted">${product(x.productId).name} · ${x.date}</div></div><b>${money(x.total)}</b></div>`).join(''):'<div class="empty">No hay cuentas por pagar.</div>';
+}
+render();
+
+// ---------- Voz ----------
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null, listening=false;
+if(SpeechRecognition){
+ recognition=new SpeechRecognition();recognition.lang='es-CO';recognition.interimResults=false;recognition.maxAlternatives=1;
+ recognition.onstart=()=>{listening=true;micBtn.classList.add('listening');voiceStatus.textContent='Escuchando…';voiceTranscript.textContent='Habla ahora.'}
+ recognition.onend=()=>{listening=false;micBtn.classList.remove('listening');if(voiceStatus.textContent==='Escuchando…')voiceStatus.textContent='Listo para escuchar'}
+ recognition.onerror=e=>{listening=false;micBtn.classList.remove('listening');voiceStatus.textContent='No pude escuchar la operación';voiceTranscript.textContent=e.error==='not-allowed'?'El navegador bloqueó el micrófono.':'Intenta de nuevo.'}
+ recognition.onresult=e=>{const text=e.results[0][0].transcript;voiceTranscript.textContent=text;parseVoice(text)}
+}else{voiceStatus.textContent='Reconocimiento de voz no disponible';voiceTranscript.textContent='Usa Chrome o Edge con permiso para micrófono.'}
+micBtn.onclick=()=>{if(!recognition)return; if(listening)recognition.stop();else recognition.start()}
+
+function normalize(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function findProductByVoice(text){
+ const n=normalize(text);
+ return state.products.find(p=>n.includes(normalize(p.name))) || state.products.find(p=>n.includes('cafe '+p.name.split(' ').slice(1).join(' '))) || null
+}
+function parseMoney(t){
+ let s=t.replace(/\$/g,'').replace(/\./g,'').replace(/,/g,'.');
+ const nums=s.match(/\d+(?:\.\d+)?/g);return nums?Number(nums[nums.length-1]):0
+}
+function parseVoice(text){
+ const n=normalize(text);let kind=n.includes('gasto')?'expense':(n.includes('compra')||n.includes('compre')||n.includes('compré')?'purchase':(n.includes('venta')||n.includes('vendi')||n.includes('vendí')?'sale':null));
+ if(!kind){voicePreview.hidden=false;voicePreview.innerHTML='<b>No identifiqué si es venta, compra o gasto.</b><div class="muted" style="margin-top:6px">Prueba: “Vendí 3 Café Volcán a 31460 en efectivo”.</div>';return}
+ const p=kind!=='expense'?findProductByVoice(text):null;
+ const qMatch=n.match(/(?:vendi|compre|venta de|compra de)\s+(\d+)/);let qty=qMatch?Number(qMatch[1]):1;
+ const priceMatch=n.match(/(?:a|por|de)\s+\$?\s*([\d\.\,]+)/);let amount=priceMatch?parseMoney(priceMatch[1]):0;
+ let payment='Efectivo'; if(n.includes('nequi'))payment='Nequi';else if(n.includes('transferencia'))payment='Transferencia';else if(n.includes('tarjeta'))payment='Tarjeta';else if(n.includes('credito'))payment='Crédito';
+ voicePreview.hidden=false;
+ if(kind==='expense'){
+  const descMatch=text.match(/(?:gasto(?: de)?|pago de)\s+(.+?)(?:\s+por\s+\$?[\d\.,]+|\s*$)/i);const desc=descMatch?descMatch[1].trim():'Gasto';
+  const total=amount;voicePreview.innerHTML=`<b>Gasto detectado</b><div style="margin-top:8px">${desc} · ${money(total)} · ${payment}</div><div style="margin-top:12px"><button class="btn btn-primary" onclick='applyVoiceExpense(${JSON.stringify(desc)},${total},${JSON.stringify(payment)})'>✓ Registrar</button></div>`;
+ }else if(!p){
+  voicePreview.innerHTML='<b>No encontré el producto.</b><div class="muted" style="margin-top:6px">Usa el nombre exacto de uno de los productos del inventario.</div>';
+ }else{
+  if(!amount)amount=(kind==='sale'?p.sale:p.cost);
+  const total=qty*amount;voicePreview.innerHTML=`<b>${kind==='sale'?'Venta':'Compra'} detectada</b><div style="margin-top:8px">${qty} × ${p.name} · ${money(amount)} c/u · ${money(total)} · ${payment}</div><div style="margin-top:12px"><button class="btn btn-primary" onclick='applyVoiceOp(${JSON.stringify(kind)},${JSON.stringify(p.id)},${qty},${amount},${JSON.stringify(payment)})'>✓ Registrar</button></div>`;
+ }
+}
+function applyVoiceExpense(desc,total,payment){state.expenses.unshift({id:'e'+Date.now(),date:today,description:desc,total,payment,type:payment==='Crédito'?'Crédito':'Contado'});save();render();voicePreview.innerHTML='<b>✓ Gasto registrado correctamente.</b>';showToast('Gasto registrado por voz')}
+function applyVoiceOp(kind,pid,qty,amount,payment){
+ const p=product(pid),total=qty*amount,type=payment==='Crédito'?'Crédito':'Contado';
+ if(kind==='sale'){if(qty>p.stock){showToast('Stock insuficiente');return}state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type});p.stock-=qty}
+ else{state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type});p.stock+=qty}
+ save();render();voicePreview.innerHTML='<b>✓ Operación registrada correctamente.</b>';showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz')
+}
+</script>
+</body>
+</html>
