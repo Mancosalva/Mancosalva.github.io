@@ -205,7 +205,12 @@ td b{color:#111827}
     <div class="modal-head" style="justify-content:center; border-bottom:none; margin-bottom:10px">
       <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Di tu operación completa...</h3>
     </div>
-    <p class="muted" style="margin-bottom:14px">Habla sin prisa. El sistema esperará a que termines.</p>
+    <p class="muted" style="margin-bottom:12px">Habla sin prisa, mira el texto en pantalla y toca <b>Confirmar</b> cuando termines.</p>
+
+    <div style="width:100%;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-bottom:14px" title="Nivel de micrófono en vivo">
+      <div id="micLevelBar" style="height:100%;width:0%;background:var(--ok);border-radius:999px;transition:width .08s linear"></div>
+    </div>
+
     <div id="voiceLiveDot" style="display:none; align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:800; color:var(--danger); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px">
       <span class="live-dot"></span> Captando audio en vivo
     </div>
@@ -213,8 +218,9 @@ td b{color:#111827}
       <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Esperando voz...</p>
     </div>
     <div id="voicePreview" style="margin-top:20px; text-align:left;" hidden></div>
-    
-    <div style="display:flex; gap:12px; margin-top:24px; width:100%">
+
+    <button class="btn btn-primary" id="confirmVoiceBtn" style="width:100%; margin-top:22px; padding:15px; font-size:16px" onclick="confirmVoice()">✅ Ya terminé, confirmar</button>
+    <div style="display:flex; gap:12px; margin-top:12px; width:100%">
       <button class="btn btn-light" style="flex:1" onclick="restartVoice()">🔄 Volver a intentar</button>
       <button class="btn btn-danger" style="flex:1; background:#fef2f2; color:var(--danger); border-color:#fecaca" onclick="stopVoice()">Cancelar</button>
     </div>
@@ -389,15 +395,10 @@ render();
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null, listening = false;
 let finalTranscript = '';
-let silenceTimer = null;
-const SILENCE_MS = 1800; // pausa de silencio real que marca "terminé de hablar"
-
-function resetSilenceTimer(){
- clearTimeout(silenceTimer);
- silenceTimer = setTimeout(() => {
-  if(listening) recognition.stop(); // el usuario dejó de hablar: cerramos y procesamos lo acumulado
- }, SILENCE_MS);
-}
+let interimBuffer = '';
+let voiceCancelled = false;
+const MAX_LISTEN_MS = 60000; // tope de seguridad para que nunca quede escuchando "para siempre"
+let maxListenTimer = null;
 
 function escapeHtml(str){
  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -412,17 +413,54 @@ function updateTranscriptView(){
   box.textContent = 'Escuchando... di tu operación';
  }
 }
-let interimBuffer = '';
+
+// ---------- Medidor de nivel de micrófono en vivo (independiente del texto reconocido) ----------
+// Esto confirma con certeza si el micrófono está captando sonido, incluso si el
+// reconocimiento de texto tarda en mostrar resultados.
+let micStream = null, audioCtx = null, analyser = null, meterRAF = null;
+
+async function startMicMeter(){
+ try{
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaStreamSource(micStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  source.connect(analyser);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  const bar = document.getElementById('micLevelBar');
+  const loop = () => {
+   analyser.getByteFrequencyData(data);
+   let sum = 0; for(let i=0;i<data.length;i++) sum += data[i];
+   const avg = sum / data.length;
+   const pct = Math.min(100, (avg / 65) * 100);
+   if(bar) bar.style.width = pct + '%';
+   meterRAF = requestAnimationFrame(loop);
+  };
+  loop();
+ } catch(err){
+  console.warn('No se pudo iniciar el medidor de nivel de micrófono:', err);
+ }
+}
+function stopMicMeter(){
+ if(meterRAF) cancelAnimationFrame(meterRAF);
+ if(micStream) micStream.getTracks().forEach(t => t.stop());
+ if(audioCtx) audioCtx.close().catch(()=>{});
+ micStream = null; audioCtx = null; analyser = null; meterRAF = null;
+ const bar = document.getElementById('micLevelBar');
+ if(bar) bar.style.width = '0%';
+}
 
 if(SpeechRecognition){
  recognition = new SpeechRecognition();
  recognition.lang = 'es-CO';
- recognition.interimResults = true; // muestra el texto en vivo mientras hablas
- recognition.continuous = true;     // no corta en la primera pausa breve, sigue escuchando
+ recognition.interimResults = true; // muestra el texto en vivo mientras hablas (si el navegador lo soporta)
+ recognition.continuous = true;     // no corta en la primera pausa breve; tú decides cuándo termina con "Confirmar"
  recognition.maxAlternatives = 1;
 
  recognition.onstart = () => {
   listening = true;
+  voiceCancelled = false;
   finalTranscript = '';
   interimBuffer = '';
   document.getElementById('fabMic').classList.add('listening');
@@ -431,12 +469,16 @@ if(SpeechRecognition){
   document.getElementById('voiceTranscript').textContent = 'Esperando permiso del navegador...';
   document.getElementById('voicePreview').hidden = true;
   openModal('voiceModal');
-  resetSilenceTimer();
+  startMicMeter();
+  clearTimeout(maxListenTimer);
+  maxListenTimer = setTimeout(() => {
+   if(listening){ showToast('⏱️ Tiempo máximo alcanzado, procesando lo dicho'); recognition.stop(); }
+  }, MAX_LISTEN_MS);
  };
 
  // Etapas de diagnóstico: así sabes exactamente en dónde se traba
  recognition.onaudiostart = () => {
-  document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo, esperando que hables...';
+  document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo. Habla y toca Confirmar al terminar';
   document.getElementById('voiceTranscript').textContent = 'Habla ahora, de corrido...';
  };
  recognition.onsoundstart = () => {
@@ -447,8 +489,8 @@ if(SpeechRecognition){
   document.getElementById('voiceLiveDot').style.display = 'flex';
  };
  recognition.onspeechend = () => {
-  document.getElementById('voiceStatusTitle').textContent = '⏳ Verificando si terminaste la frase...';
   document.getElementById('voiceLiveDot').style.display = 'none';
+  document.getElementById('voiceStatusTitle').textContent = '🎙️ Toca "Confirmar" cuando termines';
  };
 
  recognition.onresult = e => {
@@ -462,17 +504,17 @@ if(SpeechRecognition){
    }
   }
   updateTranscriptView();
-  resetSilenceTimer(); // hay actividad de voz: seguimos dándole tiempo al usuario
  };
 
  recognition.onerror = e => {
   console.warn('SpeechRecognition error:', e.error);
   if(e.error === 'no-speech' || e.error === 'aborted'){
-   // silencio momentáneo: no cortamos toda la sesión
+   // silencio momentáneo: no cortamos toda la sesión, el usuario decide con "Confirmar"
    return;
   }
   listening = false;
-  clearTimeout(silenceTimer);
+  clearTimeout(maxListenTimer);
+  stopMicMeter();
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceLiveDot').style.display = 'none';
   let title = '❌ No se pudo reconocer tu voz';
@@ -499,14 +541,19 @@ if(SpeechRecognition){
 
  recognition.onend = () => {
   listening = false;
-  clearTimeout(silenceTimer);
+  clearTimeout(maxListenTimer);
+  stopMicMeter();
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceLiveDot').style.display = 'none';
-  const text = finalTranscript.trim();
+  if(voiceCancelled){ voiceCancelled = false; return; }
+  const text = (finalTranscript + interimBuffer).trim();
   if(text){
    document.getElementById('voiceTranscript').textContent = text;
    document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...';
    processVoiceCommand(text);
+  } else {
+   document.getElementById('voiceStatusTitle').textContent = '🤔 No escuché nada';
+   document.getElementById('voiceTranscript').textContent = 'Toca "Volver a intentar" y habla cerca del micrófono.';
   }
  };
 
@@ -521,6 +568,7 @@ if(SpeechRecognition){
 }
 
 
+
 if(recognition){
  document.getElementById('fabMic').onclick = () => {
   if(listening) stopVoice(); else recognition.start();
@@ -528,8 +576,25 @@ if(recognition){
 }
 
 function stopVoice() {
- if(recognition && listening) recognition.stop();
+ voiceCancelled = true;
+ if(recognition && listening){
+  recognition.stop(); // onend detectará voiceCancelled y no procesará el texto
+ } else {
+  stopMicMeter();
+ }
  closeModal('voiceModal');
+}
+
+function confirmVoice() {
+ // El usuario decide que ya terminó de hablar: cerramos la escucha y procesamos lo dicho
+ voiceCancelled = false;
+ if(recognition && listening){
+  recognition.stop(); // dispara onend, que procesa finalTranscript + interimBuffer
+ } else {
+  const text = (finalTranscript + interimBuffer).trim();
+  if(text) processVoiceCommand(text);
+  else showToast('No he escuchado nada todavía');
+ }
 }
 
 function restartVoice() {
