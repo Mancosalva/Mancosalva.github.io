@@ -117,11 +117,10 @@ td b{color:#111827}
     <div class="topbar">
       <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Una vista rápida del estado de tu negocio.</p></div>
       <div class="top-actions">
-        <button class="btn btn-light" id="resetBtn">↺ Restaurar datos demo</button>
+        <button class="btn btn-light" id="resetBtn">↺ Restaurar Excel de prueba</button>
       </div>
     </div>
 
-    <!-- Vistas del contenido -->
     <section id="dashboard" class="section active">
       <div class="card hero">
         <h3>Tu negocio habla. ContaVoz organiza.</h3>
@@ -176,17 +175,17 @@ td b{color:#111827}
     <div class="modal-head" style="justify-content:center; border-bottom:none; margin-bottom:10px">
       <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Escuchando...</h3>
     </div>
-    <p class="muted" style="margin-bottom:24px">Habla de forma natural. Ejemplos:</p>
-    <div class="grid cols-1" style="text-align:left; gap:8px; margin-bottom:24px">
-      <div class="voice-text">"Vendí 3 Café Volcán a 31000 en efectivo"</div>
-      <div class="voice-text">"Compré 10 Café Finca a crédito"</div>
-      <div class="voice-text">"Pagué gasto de luz por 70000"</div>
-    </div>
+    <p class="muted" style="margin-bottom:24px">Tómate tu tiempo. El micrófono no se apagará rápido.</p>
+    
     <div id="voiceResultBox" style="min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f9fafb; border-radius:12px; padding:16px; border:2px dashed #d1d5db">
       <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Te escucho...</p>
     </div>
     <div id="voicePreview" style="margin-top:20px; text-align:left;" hidden></div>
-    <button class="btn btn-light" style="margin-top:24px; width:100%" onclick="stopVoice()">Cancelar</button>
+    
+    <div style="display:flex; gap:12px; margin-top:24px; width:100%">
+      <button class="btn btn-light" style="flex:1" onclick="restartVoice()">🔄 Volver a intentar</button>
+      <button class="btn btn-danger" style="flex:1; background:#fef2f2; color:var(--danger); border-color:#fecaca" onclick="stopVoice()">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -196,17 +195,37 @@ td b{color:#111827}
 <button id="fabMic" class="fab-mic" title="Registrar por voz">🎙️</button>
 
 <script>
-// --- Lógica de Estado y Renderizado (Optimizada) ---
-const KEY='contavoz_state_v2';
-const demoProducts=[
- {id:'001',name:'Café Volcán 250gr',stock:50,cost:11460,sale:31460},
- {id:'002',name:'Café Finca 454gr',stock:50,cost:45780,sale:65780},
- {id:'003',name:'Café Mujeres Cafeteras',stock:50,cost:45780,sale:65780},
- {id:'004',name:'Café Origen Nariño',stock:50,cost:45780,sale:65780},
- {id:'005',name:'Café Colina 454gr',stock:50,cost:36650,sale:56650}
-];
+// --- Lógica de Estado y Renderizado con DATOS DEL EXCEL ---
+const KEY='contavoz_state_v3'; // Nueva clave para forzar la carga de los datos nuevos
 const today=new Date().toISOString().slice(0,10);
-function defaultState(){return {products:structuredClone(demoProducts),purchases:[],sales:[],expenses:[]}}
+
+// DATOS EXTRAÍDOS EXACTAMENTE DEL EXCEL "APP Micro empresarios"
+const demoProducts=[
+ {id:'1',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460},
+ {id:'2',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780},
+ {id:'3',name:'Café Mujeres Cafeteras en granos 454gr',stock:50,cost:45780,sale:65780},
+ {id:'4',name:'Café Origen Nariño en granos 454gr',stock:50,cost:45780,sale:65780},
+ {id:'5',name:'Café Colina en grano 454gr',stock:50,cost:36650,sale:56650}
+];
+const demoPurchases=[
+ {id:'p1',date:today,productId:'1',qty:100,total:1146000,payment:'Efectivo',type:'Contado'},
+ {id:'p2',date:today,productId:'2',qty:150,total:6867000,payment:'Nequi',type:'Contado'},
+ {id:'p3',date:today,productId:'3',qty:200,total:9156000,payment:'Nequi',type:'Contado'},
+ {id:'p4',date:today,productId:'4',qty:250,total:11445000,payment:'Crédito',type:'Crédito'},
+ {id:'p5',date:today,productId:'5',qty:300,total:10995000,payment:'Crédito',type:'Crédito'}
+];
+const demoSales=[
+ {id:'s1',date:today,productId:'1',qty:50,total:1573000,payment:'Efectivo',type:'Contado'},
+ {id:'s2',date:today,productId:'2',qty:100,total:6578000,payment:'Nequi',type:'Contado'},
+ {id:'s3',date:today,productId:'3',qty:150,total:9867000,payment:'Nequi',type:'Contado'},
+ {id:'s4',date:today,productId:'4',qty:200,total:13156000,payment:'Nequi',type:'Contado'},
+ {id:'s5',date:today,productId:'5',qty:250,total:14162500,payment:'Crédito',type:'Crédito'}
+];
+const demoExpenses=[
+ ['Agua',100000],['Luz',70000],['Internet',150000],['Nomina',2000000],['Seguridad Social',500000],['Arriendo',2000000],['Útiles de Aseo',50000],['Vigilancia',70000]
+].map((x,i)=>({id:'e'+i,date:today,description:x[0],total:x[1],payment:'Nequi',type:'Contado'}));
+
+function defaultState(){return {products:structuredClone(demoProducts),purchases:structuredClone(demoPurchases),sales:structuredClone(demoSales),expenses:structuredClone(demoExpenses)}}
 let state=load();
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x||defaultState()}catch(e){return defaultState()}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
@@ -233,12 +252,11 @@ function go(section){
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
-document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar los datos limpios?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
+document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar los datos del Excel de prueba?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
 
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal('modal')});
-document.getElementById('voiceModal').addEventListener('click',e=>{if(e.target.id==='voiceModal')stopVoice()});
 
 function action(a){
  if(a==='new-sale') newSale(); if(a==='new-purchase') newPurchase();
@@ -325,9 +343,7 @@ function render(){
 }
 render();
 
-// ---------- CÓDIGO DE VOZ ARREGLADO Y OPTIMIZADO ----------
-// El problema anterior era que la coincidencia de cadenas era demasiado estricta.
-// Se implementó una lógica de palabras clave (fuzzy matching) y un Modal Global.
+// ---------- CÓDIGO DE VOZ OPTIMIZADO Y CONTINUO ----------
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null, listening=false;
@@ -335,7 +351,8 @@ let recognition=null, listening=false;
 if(SpeechRecognition){
  recognition=new SpeechRecognition();
  recognition.lang='es-CO';
- recognition.interimResults=true; // Muestra resultados mientras hablas
+ recognition.interimResults=true; 
+ recognition.continuous=true; // Clave para que no se apague en silencios cortos
  recognition.maxAlternatives=1;
 
  recognition.onstart=()=>{
@@ -350,32 +367,35 @@ if(SpeechRecognition){
  recognition.onend=()=>{
   listening=false;
   document.getElementById('fabMic').classList.remove('listening');
-  if(document.getElementById('voiceStatusTitle').textContent==='🎙️ Te estoy escuchando...') {
-     document.getElementById('voiceStatusTitle').textContent='✅ Procesando...';
-  }
  }
  
  recognition.onerror=e=>{
+  if(e.error==='no-speech') return; // Ignoramos el error de silencio
   listening=false;
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceStatusTitle').textContent='❌ Error';
   if(e.error==='not-allowed'){
       document.getElementById('voiceTranscript').innerHTML='<b>Permiso denegado.</b><br>Debes permitir el uso del micrófono en tu navegador.';
   } else {
-      document.getElementById('voiceTranscript').textContent='No te escuché bien, inténtalo de nuevo.';
+      document.getElementById('voiceTranscript').textContent='No te escuché bien. Presiona "Volver a intentar".';
   }
  }
  
  recognition.onresult=e=>{
-  const isFinal = e.results[0].isFinal;
-  const text=e.results[0][0].transcript;
-  document.getElementById('voiceTranscript').textContent=text;
-  if(isFinal) processVoiceCommand(text);
+  const currentIndex = e.results.length - 1;
+  const isFinal = e.results[currentIndex].isFinal;
+  const text = e.results[currentIndex][0].transcript;
+  document.getElementById('voiceTranscript').textContent = text;
+  
+  if(isFinal) {
+      recognition.stop();
+      document.getElementById('voiceStatusTitle').textContent='✅ Procesando...';
+      processVoiceCommand(text);
+  }
  }
 } else {
-  // Fallback si el navegador no soporta Web Speech API
   document.getElementById('fabMic').onclick = () => {
-      alert("Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Edge en un entorno seguro (HTTPS).");
+      alert("Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Edge en Android/PC.");
   }
 }
 
@@ -390,14 +410,26 @@ function stopVoice() {
     closeModal('voiceModal');
 }
 
+// Función del nuevo botón de reinicio
+function restartVoice() {
+    if(recognition) {
+        if(listening) recognition.stop();
+        setTimeout(() => {
+            document.getElementById('voicePreview').hidden=true;
+            document.getElementById('voiceStatusTitle').textContent='🎙️ Te estoy escuchando...';
+            document.getElementById('voiceTranscript').textContent='Habla ahora...';
+            recognition.start();
+        }, 400); // Pequeño retraso para evitar solapamientos del hardware
+    }
+}
+
 function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-// Mejora crucial: Búsqueda flexible por palabras clave del PMV
 function fuzzyFindProduct(text){
  const n = normalizeStr(text);
  const keywords = {
-     'volcan': '001', 'finca': '002', 'mujeres': '003', 
-     'origen': '004', 'narino': '004', 'colina': '005'
+     'volcan': '1', 'finca': '2', 'mujeres': '3', 
+     'origen': '4', 'narino': '4', 'colina': '5'
  };
  for(let key in keywords){
      if(n.includes(key)) return product(keywords[key]);
@@ -415,7 +447,6 @@ function processVoiceCommand(text){
  const voicePreview = document.getElementById('voicePreview');
  voicePreview.hidden = false;
  
- // 1. Determinar tipo de operación
  let kind=null;
  if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind='expense'; }
  else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind='purchase'; }
@@ -426,15 +457,12 @@ function processVoiceCommand(text){
   return;
  }
 
- // 2. Extraer método de pago
  let payment='Efectivo';
  if(n.includes('nequi')) payment='Nequi';
  else if(n.includes('transferencia')) payment='Transferencia';
  else if(n.includes('credito') || n.includes('debi')) payment='Crédito';
 
- // Flujo para Gastos
  if(kind==='expense'){
-  // Intentar capturar descripción del gasto "gasto de X por Y"
   const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
   let desc = descMatch ? descMatch[1].trim() : 'Gasto general';
   
@@ -456,22 +484,19 @@ function processVoiceCommand(text){
   return;
  }
 
- // Flujo para Ventas y Compras
  const p = fuzzyFindProduct(text);
  if(!p){
   voicePreview.innerHTML=`<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b><br>Asegúrate de decir "Volcán", "Finca", "Colina", etc.</div>`;
   return;
  }
 
- // Extraer Cantidad (asumimos que la cantidad es el primer número pequeño que aparezca)
  let qty = 1;
  const words = n.split(' ');
  for(let w of words){
      if(!isNaN(w) && parseInt(w) > 0 && parseInt(w) < 1000){ qty = parseInt(w); break; }
  }
 
- // Extraer Precio (buscamos un patrón de precio o tomamos el de BD)
- let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); // Buscar número después de la cantidad
+ let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); 
  if(!amount || amount === qty || amount < 100) { 
      amount = (kind==='sale' ? p.sale : p.cost); 
  }
