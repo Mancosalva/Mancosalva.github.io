@@ -82,13 +82,46 @@ td b{color:#111827}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);background:#111827;color:#fff;padding:14px 24px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 10px 25px rgba(0,0,0,0.2);opacity:0;visibility:hidden;transition:all 0.3s;z-index:100}
 .toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 .mobile-head{display:none}
+.menu-btn{border:0;background:transparent;color:var(--text);font-size:22px;padding:6px 10px;border-radius:10px;line-height:1;display:flex;align-items:center;justify-content:center}
+.menu-btn:active{background:rgba(0,0,0,0.08)}
+.sidebar-close{display:none}
+.drawer-backdrop{position:fixed;inset:0;background:rgba(17,24,39,0.55);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:55}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
-@media(max-width:760px){.sidebar{display:none}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:20px;font-weight:800}.content{padding:20px}.kpis{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}.fab-mic{bottom:20px;right:20px}}
+
+/* ---- Modo móvil: portátil u horizontal (celulares) ---- */
+@media (max-width:900px), (orientation:landscape) and (max-height:520px){
+  .sidebar{
+    position:fixed;top:0;left:0;height:100vh;width:min(260px,80vw);
+    transform:translateX(-100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);
+    z-index:60;box-shadow:20px 0 45px rgba(0,0,0,0.25);overflow-y:auto
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-close{display:grid;place-items:center;position:absolute;top:18px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.12);border:0;color:#fff;font-size:18px}
+  .mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:19px;font-weight:800}
+  .content{padding:18px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .topbar{flex-direction:column;align-items:flex-start}
+  .fab-mic{bottom:18px;right:18px;width:56px;height:56px;font-size:24px}
+}
+/* Celular vertical angosto: KPIs a 1 columna */
+@media (max-width:480px) and (orientation:portrait){
+  .kpis{grid-template-columns:1fr}
+}
+/* Celular horizontal (poca altura): compactar aún más */
+@media (orientation:landscape) and (max-height:520px){
+  .content{padding:14px}
+  .fab-mic{bottom:12px;right:12px;width:48px;height:48px;font-size:20px}
+  .modal-box{max-height:85vh;padding:24px}
+  .sidebar{padding:16px}
+}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
+    <button class="sidebar-close" id="sidebarCloseBtn" aria-label="Cerrar menú" title="Cerrar menú">×</button>
     <div class="brand">
       <div class="logo">CV</div><div><h1>ContaVoz</h1><small>Gestión sin complicaciones</small></div>
     </div>
@@ -104,7 +137,11 @@ td b{color:#111827}
   </aside>
 
   <main class="content">
-    <div class="mobile-head"><b>ContaVoz</b></div>
+    <div class="mobile-head">
+      <button id="menuBtn" class="menu-btn" aria-label="Abrir menú" title="Menú">☰</button>
+      <b>ContaVoz</b>
+      <span style="width:34px"></span>
+    </div>
     <div class="topbar">
       <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Resumen financiero de tu negocio.</p></div>
       <div class="top-actions">
@@ -156,6 +193,7 @@ td b{color:#111827}
     </section>
   </main>
 </div>
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
 
 <div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3 id="modalTitle">Nueva operación</h3><button class="close" onclick="closeModal('modal')">×</button></div><div id="modalBody"></div></div></div>
 
@@ -238,6 +276,25 @@ function go(section){
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
+
+// ---------- MENÚ MÓVIL: panel lateral (drawer) que funciona igual en vertical y horizontal ----------
+const sidebarEl = document.querySelector('.sidebar');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
+const menuBtn = document.getElementById('menuBtn');
+const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+
+function openDrawer(){ sidebarEl.classList.add('open'); drawerBackdrop.classList.add('open'); }
+function closeDrawer(){ sidebarEl.classList.remove('open'); drawerBackdrop.classList.remove('open'); }
+function toggleDrawer(){ sidebarEl.classList.contains('open') ? closeDrawer() : openDrawer(); }
+
+if(menuBtn) menuBtn.addEventListener('click', toggleDrawer);
+if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeDrawer);
+drawerBackdrop.addEventListener('click', closeDrawer);
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click', closeDrawer));
+
+// Si el usuario gira el celular o cambia de tamaño y ya no está en modo móvil, cerramos el panel
+window.addEventListener('resize', ()=>{ if(window.innerWidth>900) closeDrawer(); });
+window.addEventListener('orientationchange', closeDrawer);
 document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar datos?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
 
 function openModal(id){document.getElementById(id).classList.add('open')}
