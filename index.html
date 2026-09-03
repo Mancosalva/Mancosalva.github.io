@@ -324,35 +324,59 @@ function render(){
 }
 render();
 
-// ---------- VOZ: PRIMERO RECIBE, DESPUÉS INTERPRETA ----------
+// ---------- VOZ: ESCUCHA CONTINUA HASTA QUE TERMINAS LA FRASE, DESPUÉS INTERPRETA ----------
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null, listening = false;
+let finalTranscript = '';
+let silenceTimer = null;
+const SILENCE_MS = 1800; // pausa de silencio real que marca "terminé de hablar"
+
+function resetSilenceTimer(){
+ clearTimeout(silenceTimer);
+ silenceTimer = setTimeout(() => {
+  if(listening) recognition.stop(); // el usuario dejó de hablar: cerramos y procesamos lo acumulado
+ }, SILENCE_MS);
+}
 
 if(SpeechRecognition){
  recognition = new SpeechRecognition();
  recognition.lang = 'es-CO';
- recognition.interimResults = false; // Solo procesa cuando terminas de hablar de corrido
- recognition.continuous = false; // Espera a que cierres la frase y emita el resultado final
+ recognition.interimResults = true; // muestra el texto en vivo mientras hablas
+ recognition.continuous = true;     // no corta en la primera pausa breve, sigue escuchando
+ recognition.maxAlternatives = 1;
 
  recognition.onstart = () => {
   listening = true;
+  finalTranscript = '';
   document.getElementById('fabMic').classList.add('listening');
   document.getElementById('voiceStatusTitle').textContent = '🎙️ Te estoy escuchando...';
   document.getElementById('voiceTranscript').textContent = 'Di tu operación completa de corrido...';
   document.getElementById('voicePreview').hidden = true;
   openModal('voiceModal');
+  resetSilenceTimer();
  };
 
  recognition.onresult = e => {
-  const text = e.results[0][0].transcript;
-  document.getElementById('voiceTranscript').textContent = text;
-  document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...';
-  processVoiceCommand(text);
+  let interim = '';
+  for(let i = e.resultIndex; i < e.results.length; i++){
+   const transcript = e.results[i][0].transcript;
+   if(e.results[i].isFinal){
+    finalTranscript += transcript + ' ';
+   } else {
+    interim += transcript;
+   }
+  }
+  document.getElementById('voiceTranscript').textContent = (finalTranscript + interim).trim() || 'Escuchando...';
+  resetSilenceTimer(); // hay actividad de voz: seguimos dándole tiempo al usuario
  };
 
  recognition.onerror = e => {
-  if(e.error === 'no-speech') return;
+  if(e.error === 'no-speech' || e.error === 'aborted'){
+   // no cortamos toda la sesión por un silencio momentáneo
+   return;
+  }
   listening = false;
+  clearTimeout(silenceTimer);
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceStatusTitle').textContent = '❌ No se detectó voz';
   document.getElementById('voiceTranscript').textContent = 'Inténtalo de nuevo con el botón de abajo.';
@@ -360,7 +384,14 @@ if(SpeechRecognition){
 
  recognition.onend = () => {
   listening = false;
+  clearTimeout(silenceTimer);
   document.getElementById('fabMic').classList.remove('listening');
+  const text = finalTranscript.trim();
+  if(text){
+   document.getElementById('voiceTranscript').textContent = text;
+   document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...';
+   processVoiceCommand(text);
+  }
  };
 } else {
  document.getElementById('fabMic').onclick = () => alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
