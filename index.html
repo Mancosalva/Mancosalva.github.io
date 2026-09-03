@@ -75,6 +75,8 @@ td b{color:#111827}
 @keyframes pulse-fab{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0.7)}70%{transform:scale(1);box-shadow:0 0 0 20px rgba(220,38,38,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0)}}
 .live-dot{width:9px;height:9px;border-radius:50%;background:var(--danger);animation:blinkDot 1s infinite}
 @keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.15}}
+.bar-pulse{animation:barPulse .5s ease-in-out infinite alternate}
+@keyframes barPulse{from{filter:brightness(1)}to{filter:brightness(1.5)}}
 .voice-text{padding:16px;border:1px dashed #d1d5db;border-radius:12px;background:#f9fafb; font-size:15px; margin-bottom:12px}
 .list{display:grid;gap:12px}
 .list-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
@@ -207,7 +209,7 @@ td b{color:#111827}
     </div>
     <p class="muted" style="margin-bottom:12px">Habla sin prisa, mira el texto en pantalla y toca <b>Confirmar</b> cuando termines.</p>
 
-    <div style="width:100%;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-bottom:14px" title="Nivel de micrófono en vivo">
+    <div style="width:100%;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-bottom:14px" title="Actividad de voz detectada por el reconocedor">
       <div id="micLevelBar" style="height:100%;width:0%;background:var(--ok);border-radius:999px;transition:width .08s linear"></div>
     </div>
 
@@ -417,38 +419,17 @@ function updateTranscriptView(){
 // ---------- Medidor de nivel de micrófono en vivo (independiente del texto reconocido) ----------
 // Esto confirma con certeza si el micrófono está captando sonido, incluso si el
 // reconocimiento de texto tarda en mostrar resultados.
-let micStream = null, audioCtx = null, analyser = null, meterRAF = null;
-
-async function startMicMeter(){
- try{
-  micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const source = audioCtx.createMediaStreamSource(micStream);
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  source.connect(analyser);
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  const bar = document.getElementById('micLevelBar');
-  const loop = () => {
-   analyser.getByteFrequencyData(data);
-   let sum = 0; for(let i=0;i<data.length;i++) sum += data[i];
-   const avg = sum / data.length;
-   const pct = Math.min(100, (avg / 65) * 100);
-   if(bar) bar.style.width = pct + '%';
-   meterRAF = requestAnimationFrame(loop);
-  };
-  loop();
- } catch(err){
-  console.warn('No se pudo iniciar el medidor de nivel de micrófono:', err);
- }
-}
-function stopMicMeter(){
- if(meterRAF) cancelAnimationFrame(meterRAF);
- if(micStream) micStream.getTracks().forEach(t => t.stop());
- if(audioCtx) audioCtx.close().catch(()=>{});
- micStream = null; audioCtx = null; analyser = null; meterRAF = null;
+// ---------- Indicador de nivel, basado en los eventos REALES del reconocedor ----------
+// IMPORTANTE: ya no abrimos un getUserMedia propio para esto. Antes lo hacíamos, pero
+// eso competía por el micrófono con SpeechRecognition y en varios celulares le quitaba
+// el audio al reconocedor (por eso la barra se movía pero el texto nunca aparecía).
+// Ahora la barra se mueve solo cuando el MOTOR DE VOZ detecta audio/sonido/habla,
+// así que si se mueve, es garantía real de que el reconocedor está recibiendo audio.
+function setMicBar(pct, pulse){
  const bar = document.getElementById('micLevelBar');
- if(bar) bar.style.width = '0%';
+ if(!bar) return;
+ bar.style.width = pct + '%';
+ bar.classList.toggle('bar-pulse', !!pulse);
 }
 
 if(SpeechRecognition){
@@ -469,7 +450,7 @@ if(SpeechRecognition){
   document.getElementById('voiceTranscript').textContent = 'Esperando permiso del navegador...';
   document.getElementById('voicePreview').hidden = true;
   openModal('voiceModal');
-  startMicMeter();
+  setMicBar(0, false);
   clearTimeout(maxListenTimer);
   maxListenTimer = setTimeout(() => {
    if(listening){ showToast('⏱️ Tiempo máximo alcanzado, procesando lo dicho'); recognition.stop(); }
@@ -480,17 +461,21 @@ if(SpeechRecognition){
  recognition.onaudiostart = () => {
   document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo. Habla y toca Confirmar al terminar';
   document.getElementById('voiceTranscript').textContent = 'Habla ahora, de corrido...';
+  setMicBar(10, false);
  };
  recognition.onsoundstart = () => {
   document.getElementById('voiceStatusTitle').textContent = '👂 Detecté sonido...';
+  setMicBar(40, false);
  };
  recognition.onspeechstart = () => {
   document.getElementById('voiceStatusTitle').textContent = '🗣️ Escuchando tu voz...';
   document.getElementById('voiceLiveDot').style.display = 'flex';
+  setMicBar(90, true);
  };
  recognition.onspeechend = () => {
   document.getElementById('voiceLiveDot').style.display = 'none';
   document.getElementById('voiceStatusTitle').textContent = '🎙️ Toca "Confirmar" cuando termines';
+  setMicBar(15, false);
  };
 
  recognition.onresult = e => {
@@ -506,6 +491,11 @@ if(SpeechRecognition){
   updateTranscriptView();
  };
 
+ // Se disparó el reconocimiento (recibió audio) pero no logró identificar ninguna palabra
+ recognition.onnomatch = () => {
+  console.warn('SpeechRecognition: onnomatch — recibió audio pero no reconoció palabras');
+ };
+
  recognition.onerror = e => {
   console.warn('SpeechRecognition error:', e.error);
   if(e.error === 'no-speech' || e.error === 'aborted'){
@@ -514,7 +504,7 @@ if(SpeechRecognition){
   }
   listening = false;
   clearTimeout(maxListenTimer);
-  stopMicMeter();
+  setMicBar(0, false);
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceLiveDot').style.display = 'none';
   let title = '❌ No se pudo reconocer tu voz';
@@ -542,7 +532,7 @@ if(SpeechRecognition){
  recognition.onend = () => {
   listening = false;
   clearTimeout(maxListenTimer);
-  stopMicMeter();
+  setMicBar(0, false);
   document.getElementById('fabMic').classList.remove('listening');
   document.getElementById('voiceLiveDot').style.display = 'none';
   if(voiceCancelled){ voiceCancelled = false; return; }
@@ -580,7 +570,7 @@ function stopVoice() {
  if(recognition && listening){
   recognition.stop(); // onend detectará voiceCancelled y no procesará el texto
  } else {
-  stopMicMeter();
+  setMicBar(0, false);
  }
  closeModal('voiceModal');
 }
