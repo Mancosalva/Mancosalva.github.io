@@ -16,7 +16,6 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--t
 button,input,select,textarea{font:inherit}
 button{cursor:pointer; transition: all 0.2s ease;}
 .app{display:flex;min-height:100vh}
-/* Sidebar mejorado */
 .sidebar{width:260px;background:var(--primary);color:#fff;padding:24px 20px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
 .brand{display:flex;gap:14px;align-items:center;margin-bottom:32px}
 .logo{width:48px;height:48px;border-radius:14px;background:var(--accent);color:#113f2e;display:grid;place-items:center;font-size:24px;font-weight:900;}
@@ -25,7 +24,6 @@ button{cursor:pointer; transition: all 0.2s ease;}
 .nav button{border:0;background:transparent;color:#9ca3af;text-align:left;padding:14px 16px;border-radius:12px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:15px}
 .nav button.active,.nav button:hover{background:rgba(255,255,255,0.1);color:#fff}
 .sidebar-footer{padding:16px;border-radius:14px;background:rgba(255,255,255,0.05);font-size:12px;color:#9ca3af; line-height:1.5}
-/* Contenido principal */
 .content{flex:1;padding:32px;max-width:1400px;margin:auto;width:100%; position:relative}
 .topbar{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:28px}
 .topbar h2{margin:0;font-size:32px; font-weight:800; letter-spacing:-0.02em; color:#111827}
@@ -46,7 +44,6 @@ button{cursor:pointer; transition: all 0.2s ease;}
 .cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:repeat(3,1fr)}
 .section{display:none; animation:fadeIn 0.3s ease}.section.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-/* Hero */
 .hero{background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;border:0;position:relative;overflow:hidden;box-shadow:var(--shadow)}
 .hero::after{content:"";position:absolute;width:300px;height:300px;background:radial-gradient(circle, rgba(211,165,55,0.15) 0%, transparent 70%);right:-50px;top:-50px;border-radius:50%}
 .hero h3{margin:0 0 10px;font-size:28px;font-weight:800}
@@ -62,7 +59,7 @@ td b{color:#111827}
 .toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .field label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:#374151}
-.field input,.field select{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:12px;background:#fff;font-size:14px;transition:border-color 0.2s}
+.field input,.field select{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:12px;background:#fff;font-size:14px}
 .field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(17,63,46,0.1)}
 .field.full{grid-column:1/-1}
 .form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
@@ -72,17 +69,13 @@ td b{color:#111827}
 .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .modal-head h3{margin:0;font-size:20px;font-weight:700}
 .close{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:#6b7280}
-.close:hover{background:#e5e7eb}
-/* Componente FAB - Botón de voz flotante */
 .fab-mic{position:fixed;bottom:30px;right:30px;width:64px;height:64px;border-radius:50%;background:var(--accent);color:#111827;border:none;font-size:28px;box-shadow:0 10px 25px rgba(211,165,55,0.4);display:grid;place-items:center;z-index:40;cursor:pointer;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)}
 .fab-mic:hover{transform:scale(1.05);box-shadow:0 15px 35px rgba(211,165,55,0.5)}
-.fab-mic.listening{animation:pulse-fab 1.5s infinite;background:var(--danger);color:white;box-shadow:0 0 0 0 rgba(220,38,38,0.7)}
+.fab-mic.listening{animation:pulse-fab 1.5s infinite;background:var(--danger);color:white}
 @keyframes pulse-fab{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0.7)}70%{transform:scale(1);box-shadow:0 0 0 20px rgba(220,38,38,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0)}}
-/* Estilos extra */
 .voice-text{padding:16px;border:1px dashed #d1d5db;border-radius:12px;background:#f9fafb; font-size:15px; margin-bottom:12px}
-.voice-text strong{display:block;margin-bottom:6px;color:var(--primary)}
 .list{display:grid;gap:12px}
-.list-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.02)}
+.list-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}
 .report-total{font-size:32px;font-weight:800;margin-top:8px;color:#111827}
 .muted{color:var(--muted);font-size:13px}
 .empty{text-align:center;padding:40px;color:var(--muted);background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db}
@@ -90,9 +83,7 @@ td b{color:#111827}
 .toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 .mobile-head{display:none}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
-@media(max-width:760px){
- .sidebar{display:none}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:20px;font-weight:800}.content{padding:20px}.kpis{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}.fab-mic{bottom:20px;right:20px}
-}
+@media(max-width:760px){.sidebar{display:none}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:20px;font-weight:800}.content{padding:20px}.kpis{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}.fab-mic{bottom:20px;right:20px}}
 </style>
 </head>
 <body>
@@ -109,22 +100,22 @@ td b{color:#111827}
       <button data-section="inventario">📦 Inventario</button>
       <button data-section="reportes">📊 Reportes</button>
     </nav>
-    <div class="sidebar-footer" style="margin-top:auto"><b>Modo PMV</b><br>Tus datos se guardan localmente en el navegador.</div>
+    <div class="sidebar-footer" style="margin-top:auto"><b>Modo PMV</b><br>Datos locales en navegador.</div>
   </aside>
 
   <main class="content">
     <div class="mobile-head"><b>ContaVoz</b></div>
     <div class="topbar">
-      <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Una vista rápida del estado de tu negocio.</p></div>
+      <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Resumen financiero de tu negocio.</p></div>
       <div class="top-actions">
-        <button class="btn btn-light" id="resetBtn">↺ Restaurar Excel de prueba</button>
+        <button class="btn btn-light" id="resetBtn">↺ Restaurar Datos</button>
       </div>
     </div>
 
     <section id="dashboard" class="section active">
       <div class="card hero">
         <h3>Tu negocio habla. ContaVoz organiza.</h3>
-        <p>Toca el micrófono flotante en cualquier momento y registra ventas, compras o gastos hablando de forma natural. Nosotros actualizamos tus inventarios y finanzas.</p>
+        <p>Toca el micrófono flotante, dicta completo tu operación (ej. "Vendí 10 Café Volcán en efectivo") y el sistema lo interpretará de inmediato.</p>
         <div class="hero-actions">
           <button class="btn btn-light" data-action="new-sale" style="color:var(--text)">＋ Registro Manual</button>
         </div>
@@ -142,19 +133,19 @@ td b{color:#111827}
     </section>
 
     <section id="ingresos" class="section">
-      <div class="card"><div class="toolbar"><div><b>Ingresos y ventas</b><div class="muted">Historial de ventas realizadas.</div></div><button class="btn btn-primary" data-action="new-sale">＋ Nueva venta manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
+      <div class="card"><div class="toolbar"><div><b>Ingresos y ventas</b></div><button class="btn btn-primary" data-action="new-sale">＋ Nueva venta</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
     </section>
 
     <section id="compras" class="section">
-      <div class="card"><div class="toolbar"><div><b>Compras</b><div class="muted">Abastecimiento y actualización de stock.</div></div><button class="btn btn-primary" data-action="new-purchase">＋ Nueva compra manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div></div>
+      <div class="card"><div class="toolbar"><div><b>Compras</b></div><button class="btn btn-primary" data-action="new-purchase">＋ Nueva compra</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div></div>
     </section>
 
     <section id="gastos" class="section">
-      <div class="card"><div class="toolbar"><div><b>Gastos</b><div class="muted">Control de desembolsos operativos.</div></div><button class="btn btn-primary" data-action="new-expense">＋ Nuevo gasto manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div></div>
+      <div class="card"><div class="toolbar"><div><b>Gastos</b></div><button class="btn btn-primary" data-action="new-expense">＋ Nuevo gasto</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div></div>
     </section>
 
     <section id="inventario" class="section">
-      <div class="card"><div class="toolbar"><div><b>Inventario</b><div class="muted">Catálogo de productos y existencias.</div></div><button class="btn btn-primary" data-action="new-product">＋ Nuevo producto</button></div><div class="grid cols-3" id="inventoryCards"></div></div>
+      <div class="card"><div class="toolbar"><div><b>Inventario</b></div><button class="btn btn-primary" data-action="new-product">＋ Nuevo producto</button></div><div class="grid cols-3" id="inventoryCards"></div></div>
     </section>
 
     <section id="reportes" class="section">
@@ -166,19 +157,18 @@ td b{color:#111827}
   </main>
 </div>
 
-<!-- Modal estándar para formularios manuales -->
 <div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3 id="modalTitle">Nueva operación</h3><button class="close" onclick="closeModal('modal')">×</button></div><div id="modalBody"></div></div></div>
 
-<!-- Modal rediseñado para Reconocimiento de Voz -->
+<!-- Modal Voz con Grabación por Fases (Primero recibe, luego interpreta) -->
 <div id="voiceModal" class="modal">
   <div class="modal-box" style="max-width:500px; text-align:center;">
     <div class="modal-head" style="justify-content:center; border-bottom:none; margin-bottom:10px">
-      <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Escuchando...</h3>
+      <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Di tu operación completa...</h3>
     </div>
-    <p class="muted" style="margin-bottom:24px">Tómate tu tiempo. El micrófono no se apagará rápido.</p>
+    <p class="muted" style="margin-bottom:20px">Habla sin prisa. El sistema esperará a que termines.</p>
     
-    <div id="voiceResultBox" style="min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f9fafb; border-radius:12px; padding:16px; border:2px dashed #d1d5db">
-      <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Te escucho...</p>
+    <div id="voiceResultBox" style="min-height:90px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f9fafb; border-radius:12px; padding:16px; border:2px dashed #d1d5db">
+      <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Esperando voz...</p>
     </div>
     <div id="voicePreview" style="margin-top:20px; text-align:left;" hidden></div>
     
@@ -190,16 +180,12 @@ td b{color:#111827}
 </div>
 
 <div id="toast" class="toast"></div>
-
-<!-- Botón Flotante Global (FAB) -->
 <button id="fabMic" class="fab-mic" title="Registrar por voz">🎙️</button>
 
 <script>
-// --- Lógica de Estado y Renderizado con DATOS DEL EXCEL ---
-const KEY='contavoz_state_v3'; // Nueva clave para forzar la carga de los datos nuevos
+const KEY='contavoz_state_v4';
 const today=new Date().toISOString().slice(0,10);
 
-// DATOS EXTRAÍDOS EXACTAMENTE DEL EXCEL "APP Micro empresarios"
 const demoProducts=[
  {id:'1',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460},
  {id:'2',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780},
@@ -252,7 +238,7 @@ function go(section){
 }
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
-document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar los datos del Excel de prueba?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
+document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar datos?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
 
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -293,7 +279,7 @@ function newProduct(){
  document.getElementById('modalTitle').textContent='Nuevo producto';
  document.getElementById('modalBody').innerHTML=`<form id="productForm" class="form-grid">
  <div class="field"><label>Código</label><input id="pId" required></div><div class="field"><label>Nombre</label><input id="pName" required></div>
- <div class="field"><label>Stock inicial</label><input id="pStock" type="number" min="0" value="0"></div><div class="field"><label>Costo unitario (Compra)</label><input id="pCost" type="number" min="0" value="0"></div>
+ <div class="field"><label>Stock inicial</label><input id="pStock" type="number" min="0" value="0"></div><div class="field"><label>Costo unitario</label><input id="pCost" type="number" min="0" value="0"></div>
  <div class="field full"><label>Precio de Venta</label><input id="pSale" type="number" min="0" value="0"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Crear producto</button></div></form>`;
  openModal('modal');
@@ -305,15 +291,15 @@ document.addEventListener('submit',e=>{
   e.preventDefault();
   const isSale=document.getElementById('modalTitle').textContent.includes('venta');
   const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price;
-  if(isSale && qty>p.stock){showToast('Stock insuficiente para la venta');return}
+  if(isSale && qty>p.stock){showToast('Stock insuficiente');return}
   if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock-=qty}
   else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock+=qty}
-  save();closeModal('modal');render();showToast(isSale?'Venta registrada exitosamente':'Compra registrada exitosamente')
+  save();closeModal('modal');render();showToast(isSale?'Venta registrada':'Compra registrada')
  }
 });
 
 function del(type,id){
- if(!confirm('¿Eliminar este registro permanentemente?'))return;
+ if(!confirm('¿Eliminar este registro?'))return;
  if(type==='sale'){const x=state.sales.find(v=>v.id===id);if(x)product(x.productId).stock+=x.qty;state.sales=state.sales.filter(v=>v.id!==id)}
  if(type==='purchase'){const x=state.purchases.find(v=>v.id===id);if(x)product(x.productId).stock-=x.qty;state.purchases=state.purchases.filter(v=>v.id!==id)}
  if(type==='expense')state.expenses=state.expenses.filter(v=>v.id!==id);
@@ -330,97 +316,74 @@ function render(){
  dashReceivable.textContent=money(receivable);dashPayable.textContent=money(payable);dashCash.textContent=money(cashIn-cashOut);
  
  dashInventory.innerHTML=state.products.slice(0,5).map(p=>`<div class="list-item"><div><b>${p.name}</b></div><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock} unid.</span></div>`).join('');
- 
  salesBody.innerHTML=state.sales.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay ventas registradas</td></tr>`;
- 
  purchaseBody.innerHTML=state.purchases.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay compras registradas</td></tr>`;
- 
  expenseBody.innerHTML=state.expenses.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay gastos registrados</td></tr>`;
- 
  inventoryCards.innerHTML=state.products.map(p=>`<div class="card" style="box-shadow:none; padding:16px"><div style="display:flex;justify-content:space-between;gap:8px; margin-bottom:12px"><b>${p.name}</b><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock}</span></div><div class="muted" style="font-size:12px">Costo: ${money(p.cost)}<br>Venta: ${money(p.sale)}</div></div>`).join('');
- 
  rCashIn.textContent=money(cashIn);rCashOut.textContent=money(cashOut);rCashTotal.textContent=money(cashIn-cashOut);rIncome.textContent=money(salesTotal);rCOGS.textContent=money(cogs);rExpenses.textContent=money(expTotal);rProfit.textContent=money(profit);
 }
 render();
 
-// ---------- CÓDIGO DE VOZ OPTIMIZADO Y CONTINUO ----------
-
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-let recognition=null, listening=false;
+// ---------- VOZ: PRIMERO RECIBE, DESPUÉS INTERPRETA ----------
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null, listening = false;
 
 if(SpeechRecognition){
- recognition=new SpeechRecognition();
- recognition.lang='es-CO';
- recognition.interimResults=true; 
- recognition.continuous=true; // Clave para que no se apague en silencios cortos
- recognition.maxAlternatives=1;
+ recognition = new SpeechRecognition();
+ recognition.lang = 'es-CO';
+ recognition.interimResults = false; // Solo procesa cuando terminas de hablar de corrido
+ recognition.continuous = false; // Espera a que cierres la frase y emita el resultado final
 
- recognition.onstart=()=>{
-  listening=true;
+ recognition.onstart = () => {
+  listening = true;
   document.getElementById('fabMic').classList.add('listening');
-  document.getElementById('voiceStatusTitle').textContent='🎙️ Te estoy escuchando...';
-  document.getElementById('voiceTranscript').textContent='Habla ahora...';
-  document.getElementById('voicePreview').hidden=true;
+  document.getElementById('voiceStatusTitle').textContent = '🎙️ Te estoy escuchando...';
+  document.getElementById('voiceTranscript').textContent = 'Di tu operación completa de corrido...';
+  document.getElementById('voicePreview').hidden = true;
   openModal('voiceModal');
- }
- 
- recognition.onend=()=>{
-  listening=false;
-  document.getElementById('fabMic').classList.remove('listening');
- }
- 
- recognition.onerror=e=>{
-  if(e.error==='no-speech') return; // Ignoramos el error de silencio
-  listening=false;
-  document.getElementById('fabMic').classList.remove('listening');
-  document.getElementById('voiceStatusTitle').textContent='❌ Error';
-  if(e.error==='not-allowed'){
-      document.getElementById('voiceTranscript').innerHTML='<b>Permiso denegado.</b><br>Debes permitir el uso del micrófono en tu navegador.';
-  } else {
-      document.getElementById('voiceTranscript').textContent='No te escuché bien. Presiona "Volver a intentar".';
-  }
- }
- 
- recognition.onresult=e=>{
-  const currentIndex = e.results.length - 1;
-  const isFinal = e.results[currentIndex].isFinal;
-  const text = e.results[currentIndex][0].transcript;
+ };
+
+ recognition.onresult = e => {
+  const text = e.results[0][0].transcript;
   document.getElementById('voiceTranscript').textContent = text;
-  
-  if(isFinal) {
-      recognition.stop();
-      document.getElementById('voiceStatusTitle').textContent='✅ Procesando...';
-      processVoiceCommand(text);
-  }
- }
+  document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...';
+  processVoiceCommand(text);
+ };
+
+ recognition.onerror = e => {
+  if(e.error === 'no-speech') return;
+  listening = false;
+  document.getElementById('fabMic').classList.remove('listening');
+  document.getElementById('voiceStatusTitle').textContent = '❌ No se detectó voz';
+  document.getElementById('voiceTranscript').textContent = 'Inténtalo de nuevo con el botón de abajo.';
+ };
+
+ recognition.onend = () => {
+  listening = false;
+  document.getElementById('fabMic').classList.remove('listening');
+ };
 } else {
-  document.getElementById('fabMic').onclick = () => {
-      alert("Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Edge en Android/PC.");
-  }
+ document.getElementById('fabMic').onclick = () => alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
 }
 
 if(recognition){
-    document.getElementById('fabMic').onclick=()=>{
-     if(listening) stopVoice(); else recognition.start();
-    };
+ document.getElementById('fabMic').onclick = () => {
+  if(listening) stopVoice(); else recognition.start();
+ };
 }
 
 function stopVoice() {
-    if(recognition && listening) recognition.stop();
-    closeModal('voiceModal');
+ if(recognition && listening) recognition.stop();
+ closeModal('voiceModal');
 }
 
-// Función del nuevo botón de reinicio
 function restartVoice() {
-    if(recognition) {
-        if(listening) recognition.stop();
-        setTimeout(() => {
-            document.getElementById('voicePreview').hidden=true;
-            document.getElementById('voiceStatusTitle').textContent='🎙️ Te estoy escuchando...';
-            document.getElementById('voiceTranscript').textContent='Habla ahora...';
-            recognition.start();
-        }, 400); // Pequeño retraso para evitar solapamientos del hardware
-    }
+ document.getElementById('voicePreview').hidden = true;
+ document.getElementById('voiceStatusTitle').textContent = '🎙️ Escuchando de nuevo...';
+ document.getElementById('voiceTranscript').textContent = 'Habla ahora...';
+ if(recognition) {
+  try { recognition.start(); } catch(err) { /* Ya activo */ }
+ }
 }
 
 function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -443,36 +406,36 @@ function extractNumber(text, defaultVal = 0) {
 }
 
 function processVoiceCommand(text){
- const n=normalizeStr(text);
+ const n = normalizeStr(text);
  const voicePreview = document.getElementById('voicePreview');
  voicePreview.hidden = false;
  
- let kind=null;
- if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind='expense'; }
- else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind='purchase'; }
- else if(n.includes('venta') || n.includes('vendi') || n.includes('vender')){ kind='sale'; }
+ let kind = null;
+ if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind = 'expense'; }
+ else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind = 'purchase'; }
+ else if(n.includes('venta') || n.includes('vendi') || n.includes('vender')){ kind = 'sale'; }
 
  if(!kind){
-  voicePreview.innerHTML=`<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No entendí la acción.</b><br>Debes decir "Vendí...", "Compré..." o "Gasto de..."</div>`;
+  voicePreview.innerHTML = `<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No identifiqué la acción.</b><br>Empieza diciendo "Vendí...", "Compré..." o "Gasto de...".</div>`;
   return;
  }
 
- let payment='Efectivo';
- if(n.includes('nequi')) payment='Nequi';
- else if(n.includes('transferencia')) payment='Transferencia';
- else if(n.includes('credito') || n.includes('debi')) payment='Crédito';
+ let payment = 'Efectivo';
+ if(n.includes('nequi')) payment = 'Nequi';
+ else if(n.includes('transferencia')) payment = 'Transferencia';
+ else if(n.includes('credito') || n.includes('debi')) payment = 'Crédito';
 
- if(kind==='expense'){
+ if(kind === 'expense'){
   const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
   let desc = descMatch ? descMatch[1].trim() : 'Gasto general';
-  
   const total = extractNumber(n);
+  
   if(total === 0){
-      voicePreview.innerHTML=`<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Gasto de luz por 50000".</div>`;
+      voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Gasto de luz por 50000".</div>`;
       return;
   }
 
-  voicePreview.innerHTML=`
+  voicePreview.innerHTML = `
    <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
         <span class="badge danger">Gasto Operativo</span>
@@ -486,7 +449,7 @@ function processVoiceCommand(text){
 
  const p = fuzzyFindProduct(text);
  if(!p){
-  voicePreview.innerHTML=`<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b><br>Asegúrate de decir "Volcán", "Finca", "Colina", etc.</div>`;
+  voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b><br>Menciona "Volcán", "Finca", "Mujeres", "Origen" o "Colina".</div>`;
   return;
  }
 
@@ -498,12 +461,12 @@ function processVoiceCommand(text){
 
  let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); 
  if(!amount || amount === qty || amount < 100) { 
-     amount = (kind==='sale' ? p.sale : p.cost); 
+     amount = (kind === 'sale' ? p.sale : p.cost); 
  }
  
  const total = qty * amount;
 
- voicePreview.innerHTML=`
+ voicePreview.innerHTML = `
    <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
         <span class="badge ${kind==='sale'?'ok':'warn'}">${kind==='sale'?'Venta':'Compra'}</span>
@@ -524,12 +487,12 @@ function applyVoiceExpense(desc,total,payment){
 }
 
 function applyVoiceOp(kind,pid,qty,amount,payment){
- const p=product(pid), total=qty*amount, type=payment==='Crédito'?'Crédito':'Contado';
- if(kind==='sale'){
-     if(qty>p.stock){showToast('Error: Stock insuficiente'); return;}
-     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock-=qty;
+ const p = product(pid), total = qty*amount, type = payment==='Crédito'?'Crédito':'Contado';
+ if(kind === 'sale'){
+     if(qty > p.stock){ showToast('Error: Stock insuficiente'); return; }
+     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock -= qty;
  } else {
-     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock+=qty;
+     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock += qty;
  }
  save(); render(); closeModal('voiceModal'); showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz');
 }
