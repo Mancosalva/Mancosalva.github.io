@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContaVoz — Gestión inteligente para microempresas</title>
+<meta name="description" content="ContaVoz: PMV para registrar ingresos, compras, gastos, inventario y reportes mediante voz.">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --surface2:#eef2f7; --text:#111827; --muted:#4b5563;
+  --primary:#113f2e; --primary2:#1c5943; --accent:#d3a537; --danger:#dc2626; --ok:#059669;
+  --border:#e5e7eb; --shadow:0 10px 25px -5px rgba(0,0,0,0.1); --radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer; transition: all 0.2s ease;}
+.app{display:flex;min-height:100vh}
+/* Sidebar mejorado */
+.sidebar{width:260px;background:var(--primary);color:#fff;padding:24px 20px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{display:flex;gap:14px;align-items:center;margin-bottom:32px}
+.logo{width:48px;height:48px;border-radius:14px;background:var(--accent);color:#113f2e;display:grid;place-items:center;font-size:24px;font-weight:900;}
+.brand h1{font-size:22px;margin:0; letter-spacing:-0.02em}.brand small{opacity:.8; font-size: 13px}
+.nav{display:flex;flex-direction:column;gap:8px;flex:1}
+.nav button{border:0;background:transparent;color:#9ca3af;text-align:left;padding:14px 16px;border-radius:12px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:15px}
+.nav button.active,.nav button:hover{background:rgba(255,255,255,0.1);color:#fff}
+.sidebar-footer{padding:16px;border-radius:14px;background:rgba(255,255,255,0.05);font-size:12px;color:#9ca3af; line-height:1.5}
+/* Contenido principal */
+.content{flex:1;padding:32px;max-width:1400px;margin:auto;width:100%; position:relative}
+.topbar{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:28px}
+.topbar h2{margin:0;font-size:32px; font-weight:800; letter-spacing:-0.02em; color:#111827}
+.topbar p{margin:6px 0 0;color:var(--muted); font-size:15px}
+.top-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:10px 18px;font-weight:600;display:inline-flex;gap:8px;align-items:center;justify-content:center;font-size:14px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary2);transform:translateY(-1px)}
+.btn-light{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,0.05)}.btn-light:hover{background:#f9fafb}
+.btn-gold{background:var(--accent);color:#111827}.btn-gold:hover{filter:brightness(1.05)}
+.btn-danger{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+.grid{display:grid;gap:20px}
+.kpis{grid-template-columns:repeat(4,1fr);margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:var(--radius);padding:24px}
+.kpi{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.kpi-icon{width:48px;height:48px;border-radius:12px;background:#f3f4f6;display:grid;place-items:center;font-size:24px}
+.kpi small{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:0.05em}
+.kpi strong{display:block;font-size:28px;margin-top:8px;font-weight:800;letter-spacing:-0.02em;color:#111827}
+.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:repeat(3,1fr)}
+.section{display:none; animation:fadeIn 0.3s ease}.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* Hero */
+.hero{background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;border:0;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;width:300px;height:300px;background:radial-gradient(circle, rgba(211,165,55,0.15) 0%, transparent 70%);right:-50px;top:-50px;border-radius:50%}
+.hero h3{margin:0 0 10px;font-size:28px;font-weight:800}
+.hero p{margin:0;color:#d1d5db;max-width:600px;font-size:15px;line-height:1.5}
+.hero-actions{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:2}
+.table-wrap{overflow-x:auto; margin-top:16px;}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:14px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;background:#f9fafb}
+td b{color:#111827}
+.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.ok{background:#d1fae5;color:var(--ok)}.badge.warn{background:#fef3c7;color:#92400e}.badge.danger{background:#fee2e2;color:var(--danger)}
+.toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:#374151}
+.field input,.field select{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:12px;background:#fff;font-size:14px;transition:border-color 0.2s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(17,63,46,0.1)}
+.field.full{grid-column:1/-1}
+.form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+.modal{display:none;position:fixed;inset:0;background:rgba(17,24,39,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.open{display:flex;animation:fadeIn 0.2s}
+.modal-box{background:#fff;border-radius:24px;width:min(600px,100%);max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.modal-head h3{margin:0;font-size:20px;font-weight:700}
+.close{border:0;background:#f3f4f6;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:#6b7280}
+.close:hover{background:#e5e7eb}
+/* Componente FAB - Botón de voz flotante */
+.fab-mic{position:fixed;bottom:30px;right:30px;width:64px;height:64px;border-radius:50%;background:var(--accent);color:#111827;border:none;font-size:28px;box-shadow:0 10px 25px rgba(211,165,55,0.4);display:grid;place-items:center;z-index:40;cursor:pointer;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1)}
+.fab-mic:hover{transform:scale(1.05);box-shadow:0 15px 35px rgba(211,165,55,0.5)}
+.fab-mic.listening{animation:pulse-fab 1.5s infinite;background:var(--danger);color:white;box-shadow:0 0 0 0 rgba(220,38,38,0.7)}
+@keyframes pulse-fab{0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0.7)}70%{transform:scale(1);box-shadow:0 0 0 20px rgba(220,38,38,0)}100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+/* Estilos extra */
+.voice-text{padding:16px;border:1px dashed #d1d5db;border-radius:12px;background:#f9fafb; font-size:15px; margin-bottom:12px}
+.voice-text strong{display:block;margin-bottom:6px;color:var(--primary)}
+.list{display:grid;gap:12px}
+.list-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.02)}
+.report-total{font-size:32px;font-weight:800;margin-top:8px;color:#111827}
+.muted{color:var(--muted);font-size:13px}
+.empty{text-align:center;padding:40px;color:var(--muted);background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db}
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);background:#111827;color:#fff;padding:14px 24px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 10px 25px rgba(0,0,0,0.2);opacity:0;visibility:hidden;transition:all 0.3s;z-index:100}
+.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.mobile-head{display:none}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .sidebar{display:none}.mobile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:20px;font-weight:800}.content{padding:20px}.kpis{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}.fab-mic{bottom:20px;right:20px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">CV</div><div><h1>ContaVoz</h1><small>Gestión sin complicaciones</small></div>
+    </div>
+    <nav class="nav">
+      <button class="active" data-section="dashboard">🏠 Dashboard</button>
+      <button data-section="ingresos">💰 Ingresos</button>
+      <button data-section="compras">🛒 Compras</button>
+      <button data-section="gastos">💸 Gastos</button>
+      <button data-section="inventario">📦 Inventario</button>
+      <button data-section="reportes">📊 Reportes</button>
+    </nav>
+    <div class="sidebar-footer" style="margin-top:auto"><b>Modo PMV</b><br>Tus datos se guardan localmente en el navegador.</div>
+  </aside>
+
+  <main class="content">
+    <div class="mobile-head"><b>ContaVoz</b></div>
+    <div class="topbar">
+      <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Una vista rápida del estado de tu negocio.</p></div>
+      <div class="top-actions">
+        <button class="btn btn-light" id="resetBtn">↺ Restaurar datos demo</button>
+      </div>
+    </div>
+
+    <!-- Vistas del contenido -->
+    <section id="dashboard" class="section active">
+      <div class="card hero">
+        <h3>Tu negocio habla. ContaVoz organiza.</h3>
+        <p>Toca el micrófono flotante en cualquier momento y registra ventas, compras o gastos hablando de forma natural. Nosotros actualizamos tus inventarios y finanzas.</p>
+        <div class="hero-actions">
+          <button class="btn btn-light" data-action="new-sale" style="color:var(--text)">＋ Registro Manual</button>
+        </div>
+      </div>
+      <div class="grid kpis" style="margin-top:24px">
+        <div class="card kpi"><div><small>Ingresos (mes)</small><strong id="kpiSales">$0</strong></div><div class="kpi-icon">💰</div></div>
+        <div class="card kpi"><div><small>Costos</small><strong id="kpiCosts">$0</strong></div><div class="kpi-icon">🧾</div></div>
+        <div class="card kpi"><div><small>Gastos</small><strong id="kpiExpenses">$0</strong></div><div class="kpi-icon">💸</div></div>
+        <div class="card kpi"><div><small>Utilidad Neta</small><strong id="kpiProfit">$0</strong></div><div class="kpi-icon">📈</div></div>
+      </div>
+      <div class="grid cols-2">
+        <div class="card"><div class="toolbar"><div><b>Estado del inventario</b></div><button class="btn btn-light" onclick="go('inventario')">Ver todo</button></div><div id="dashInventory" class="list"></div></div>
+        <div class="card"><div class="toolbar"><div><b>Caja y Cartera</b></div><button class="btn btn-light" onclick="go('reportes')">Reportes</button></div><div class="grid cols-2"><div><span class="muted">Por cobrar (Clientes)</span><div class="report-total" id="dashReceivable">$0</div></div><div><span class="muted">Por pagar (Proveedores)</span><div class="report-total" id="dashPayable">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><div class="muted">Efectivo total en caja</div><div class="report-total" style="color:var(--ok)" id="dashCash">$0</div></div>
+      </div>
+    </section>
+
+    <section id="ingresos" class="section">
+      <div class="card"><div class="toolbar"><div><b>Ingresos y ventas</b><div class="muted">Historial de ventas realizadas.</div></div><button class="btn btn-primary" data-action="new-sale">＋ Nueva venta manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
+    </section>
+
+    <section id="compras" class="section">
+      <div class="card"><div class="toolbar"><div><b>Compras</b><div class="muted">Abastecimiento y actualización de stock.</div></div><button class="btn btn-primary" data-action="new-purchase">＋ Nueva compra manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div></div>
+    </section>
+
+    <section id="gastos" class="section">
+      <div class="card"><div class="toolbar"><div><b>Gastos</b><div class="muted">Control de desembolsos operativos.</div></div><button class="btn btn-primary" data-action="new-expense">＋ Nuevo gasto manual</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div></div>
+    </section>
+
+    <section id="inventario" class="section">
+      <div class="card"><div class="toolbar"><div><b>Inventario</b><div class="muted">Catálogo de productos y existencias.</div></div><button class="btn btn-primary" data-action="new-product">＋ Nuevo producto</button></div><div class="grid cols-3" id="inventoryCards"></div></div>
+    </section>
+
+    <section id="reportes" class="section">
+      <div class="grid cols-2">
+        <div class="card"><b>Flujo de caja</b><div class="muted" style="margin-bottom:16px">Entradas y salidas efectivas.</div><div class="grid cols-2"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><span class="muted">Total disponible</span><div class="report-total" style="color:var(--ok)" id="rCashTotal">$0</div></div>
+        <div class="card"><b>Estado de resultados</b><div class="muted" style="margin-bottom:16px">Operaciones de contado y crédito.</div><div class="list"><div class="list-item"><span>Ingresos Totales</span><b id="rIncome">$0</b></div><div class="list-item"><span>Costo de mercancía</span><b id="rCOGS">$0</b></div><div class="list-item"><span>Gastos operativos</span><b id="rExpenses">$0</b></div><div class="list-item" style="background:#f0fdf4;border-color:#bbf7d0"><span>Utilidad / Pérdida</span><b id="rProfit" style="color:var(--ok)">$0</b></div></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal estándar para formularios manuales -->
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3 id="modalTitle">Nueva operación</h3><button class="close" onclick="closeModal('modal')">×</button></div><div id="modalBody"></div></div></div>
+
+<!-- Modal rediseñado para Reconocimiento de Voz -->
+<div id="voiceModal" class="modal">
+  <div class="modal-box" style="max-width:500px; text-align:center;">
+    <div class="modal-head" style="justify-content:center; border-bottom:none; margin-bottom:10px">
+      <h3 style="font-size:24px" id="voiceStatusTitle">🎙️ Escuchando...</h3>
+    </div>
+    <p class="muted" style="margin-bottom:24px">Habla de forma natural. Ejemplos:</p>
+    <div class="grid cols-1" style="text-align:left; gap:8px; margin-bottom:24px">
+      <div class="voice-text">"Vendí 3 Café Volcán a 31000 en efectivo"</div>
+      <div class="voice-text">"Compré 10 Café Finca a crédito"</div>
+      <div class="voice-text">"Pagué gasto de luz por 70000"</div>
+    </div>
+    <div id="voiceResultBox" style="min-height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f9fafb; border-radius:12px; padding:16px; border:2px dashed #d1d5db">
+      <p id="voiceTranscript" style="font-size:18px; font-weight:600; color:#111827; margin:0">Te escucho...</p>
+    </div>
+    <div id="voicePreview" style="margin-top:20px; text-align:left;" hidden></div>
+    <button class="btn btn-light" style="margin-top:24px; width:100%" onclick="stopVoice()">Cancelar</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Botón Flotante Global (FAB) -->
+<button id="fabMic" class="fab-mic" title="Registrar por voz">🎙️</button>
+
+<script>
+// --- Lógica de Estado y Renderizado (Optimizada) ---
+const KEY='contavoz_state_v2';
+const demoProducts=[
+ {id:'001',name:'Café Volcán 250gr',stock:50,cost:11460,sale:31460},
+ {id:'002',name:'Café Finca 454gr',stock:50,cost:45780,sale:65780},
+ {id:'003',name:'Café Mujeres Cafeteras',stock:50,cost:45780,sale:65780},
+ {id:'004',name:'Café Origen Nariño',stock:50,cost:45780,sale:65780},
+ {id:'005',name:'Café Colina 454gr',stock:50,cost:36650,sale:56650}
+];
+const today=new Date().toISOString().slice(0,10);
+function defaultState(){return {products:structuredClone(demoProducts),purchases:[],sales:[],expenses:[]}}
+let state=load();
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x||defaultState()}catch(e){return defaultState()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
+function product(id){return state.products.find(p=>p.id===id)}
+function sum(arr,key){return arr.reduce((a,x)=>a+(Number(x[key])||0),0)}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+const pageMeta={
+ dashboard:['Dashboard','Resumen financiero de tu negocio.'],
+ ingresos:['Ingresos','Control de ventas y cartera.'],
+ compras:['Compras','Historial de abastecimiento.'],
+ gastos:['Gastos','Desembolsos y pagos operativos.'],
+ inventario:['Inventario','Catálogo y existencias actuales.'],
+ reportes:['Reportes','Caja, utilidades y deudas.']
+};
+
+function go(section){
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
+ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===section));
+ document.getElementById('pageTitle').textContent=pageMeta[section][0];
+ document.getElementById('pageSubtitle').textContent=pageMeta[section][1];
+ render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
+document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
+document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar los datos limpios?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal('modal')});
+document.getElementById('voiceModal').addEventListener('click',e=>{if(e.target.id==='voiceModal')stopVoice()});
+
+function action(a){
+ if(a==='new-sale') newSale(); if(a==='new-purchase') newPurchase();
+ if(a==='new-expense') newExpense(); if(a==='new-product') newProduct();
+}
+function productOptions(){return state.products.map(p=>`<option value="${p.id}">${p.name} (Stock: ${p.stock})</option>`).join('')}
+
+function opForm(kind){
+ const isSale=kind==='sale';
+ return `<form id="opForm" class="form-grid">
+  <div class="field full"><label>Producto</label><select id="fProduct" required>${productOptions()}</select></div>
+  <div class="field"><label>Cantidad</label><input id="fQty" type="number" min="1" value="1" required></div>
+  <div class="field"><label>Precio unitario</label><input id="fPrice" type="number" min="0" value="${isSale?state.products[0].sale:state.products[0].cost}" required></div>
+  <div class="field"><label>Forma de pago</label><select id="fPayment"><option>Efectivo</option><option>Nequi</option><option>Transferencia</option><option>Crédito</option></select></div>
+  <div class="field"><label>Tipo</label><select id="fType"><option>Contado</option><option>Crédito</option></select></div>
+  <div class="field full"><label>Fecha</label><input id="fDate" type="date" value="${today}"></div>
+  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">${isSale?'Registrar venta':'Registrar compra'}</button></div>
+ </form>`
+}
+function newSale(){document.getElementById('modalTitle').textContent='Nueva venta'; document.getElementById('modalBody').innerHTML=opForm('sale'); openModal('modal'); document.getElementById('fProduct').onchange=e=>{document.getElementById('fPrice').value=product(e.target.value).sale}}
+function newPurchase(){document.getElementById('modalTitle').textContent='Nueva compra'; document.getElementById('modalBody').innerHTML=opForm('purchase'); openModal('modal'); document.getElementById('fProduct').onchange=e=>{document.getElementById('fPrice').value=product(e.target.value).cost}}
+function newExpense(){
+ document.getElementById('modalTitle').textContent='Nuevo gasto';
+ document.getElementById('modalBody').innerHTML=`<form id="expenseForm" class="form-grid">
+ <div class="field full"><label>Descripción</label><input id="eDesc" placeholder="Ej. Recibo de Agua" required></div>
+ <div class="field"><label>Valor</label><input id="eTotal" type="number" min="0" required></div>
+ <div class="field"><label>Forma de pago</label><select id="ePayment"><option>Efectivo</option><option>Nequi</option><option>Crédito</option></select></div>
+ <div class="field"><label>Fecha</label><input id="eDate" type="date" value="${today}"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar gasto</button></div></form>`;
+ openModal('modal');
+ document.getElementById('expenseForm').onsubmit=e=>{e.preventDefault();state.expenses.unshift({id:'e'+Date.now(),date:eDate.value,description:eDesc.value.trim(),total:+eTotal.value,payment:ePayment.value,type:ePayment.value==='Crédito'?'Crédito':'Contado'});save();closeModal('modal');render();showToast('Gasto registrado')}
+}
+function newProduct(){
+ document.getElementById('modalTitle').textContent='Nuevo producto';
+ document.getElementById('modalBody').innerHTML=`<form id="productForm" class="form-grid">
+ <div class="field"><label>Código</label><input id="pId" required></div><div class="field"><label>Nombre</label><input id="pName" required></div>
+ <div class="field"><label>Stock inicial</label><input id="pStock" type="number" min="0" value="0"></div><div class="field"><label>Costo unitario (Compra)</label><input id="pCost" type="number" min="0" value="0"></div>
+ <div class="field full"><label>Precio de Venta</label><input id="pSale" type="number" min="0" value="0"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Crear producto</button></div></form>`;
+ openModal('modal');
+ document.getElementById('productForm').onsubmit=e=>{e.preventDefault();if(product(pId.value))return showToast('Código ya existe');state.products.push({id:pId.value.trim(),name:pName.value.trim(),stock:+pStock.value,cost:+pCost.value,sale:+pSale.value});save();closeModal('modal');render();showToast('Producto creado')}
+}
+
+document.addEventListener('submit',e=>{
+ if(e.target.id==='opForm'){
+  e.preventDefault();
+  const isSale=document.getElementById('modalTitle').textContent.includes('venta');
+  const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price;
+  if(isSale && qty>p.stock){showToast('Stock insuficiente para la venta');return}
+  if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock-=qty}
+  else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock+=qty}
+  save();closeModal('modal');render();showToast(isSale?'Venta registrada exitosamente':'Compra registrada exitosamente')
+ }
+});
+
+function del(type,id){
+ if(!confirm('¿Eliminar este registro permanentemente?'))return;
+ if(type==='sale'){const x=state.sales.find(v=>v.id===id);if(x)product(x.productId).stock+=x.qty;state.sales=state.sales.filter(v=>v.id!==id)}
+ if(type==='purchase'){const x=state.purchases.find(v=>v.id===id);if(x)product(x.productId).stock-=x.qty;state.purchases=state.purchases.filter(v=>v.id!==id)}
+ if(type==='expense')state.expenses=state.expenses.filter(v=>v.id!==id);
+ save();render();showToast('Registro eliminado')
+}
+
+function render(){
+ const salesTotal=sum(state.sales,'total'), purchaseTotal=sum(state.purchases,'total'), expTotal=sum(state.expenses,'total');
+ const cogs=state.sales.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), profit=salesTotal-cogs-expTotal;
+ kpiSales.textContent=money(salesTotal);kpiCosts.textContent=money(cogs);kpiExpenses.textContent=money(expTotal);kpiProfit.textContent=money(profit);
+ const receivable=sum(state.sales.filter(x=>x.type==='Crédito'),'total'), payable=sum(state.purchases.filter(x=>x.type==='Crédito'),'total');
+ const cashIn=sum(state.sales.filter(x=>x.payment!=='Crédito'),'total');
+ const cashOut=sum(state.purchases.filter(x=>x.payment!=='Crédito'),'total')+sum(state.expenses.filter(x=>x.payment!=='Crédito'),'total');
+ dashReceivable.textContent=money(receivable);dashPayable.textContent=money(payable);dashCash.textContent=money(cashIn-cashOut);
+ 
+ dashInventory.innerHTML=state.products.slice(0,5).map(p=>`<div class="list-item"><div><b>${p.name}</b></div><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock} unid.</span></div>`).join('');
+ 
+ salesBody.innerHTML=state.sales.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay ventas registradas</td></tr>`;
+ 
+ purchaseBody.innerHTML=state.purchases.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay compras registradas</td></tr>`;
+ 
+ expenseBody.innerHTML=state.expenses.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay gastos registrados</td></tr>`;
+ 
+ inventoryCards.innerHTML=state.products.map(p=>`<div class="card" style="box-shadow:none; padding:16px"><div style="display:flex;justify-content:space-between;gap:8px; margin-bottom:12px"><b>${p.name}</b><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock}</span></div><div class="muted" style="font-size:12px">Costo: ${money(p.cost)}<br>Venta: ${money(p.sale)}</div></div>`).join('');
+ 
+ rCashIn.textContent=money(cashIn);rCashOut.textContent=money(cashOut);rCashTotal.textContent=money(cashIn-cashOut);rIncome.textContent=money(salesTotal);rCOGS.textContent=money(cogs);rExpenses.textContent=money(expTotal);rProfit.textContent=money(profit);
+}
+render();
+
+// ---------- CÓDIGO DE VOZ ARREGLADO Y OPTIMIZADO ----------
+// El problema anterior era que la coincidencia de cadenas era demasiado estricta.
+// Se implementó una lógica de palabras clave (fuzzy matching) y un Modal Global.
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null, listening=false;
+
+if(SpeechRecognition){
+ recognition=new SpeechRecognition();
+ recognition.lang='es-CO';
+ recognition.interimResults=true; // Muestra resultados mientras hablas
+ recognition.maxAlternatives=1;
+
+ recognition.onstart=()=>{
+  listening=true;
+  document.getElementById('fabMic').classList.add('listening');
+  document.getElementById('voiceStatusTitle').textContent='🎙️ Te estoy escuchando...';
+  document.getElementById('voiceTranscript').textContent='Habla ahora...';
+  document.getElementById('voicePreview').hidden=true;
+  openModal('voiceModal');
+ }
+ 
+ recognition.onend=()=>{
+  listening=false;
+  document.getElementById('fabMic').classList.remove('listening');
+  if(document.getElementById('voiceStatusTitle').textContent==='🎙️ Te estoy escuchando...') {
+     document.getElementById('voiceStatusTitle').textContent='✅ Procesando...';
+  }
+ }
+ 
+ recognition.onerror=e=>{
+  listening=false;
+  document.getElementById('fabMic').classList.remove('listening');
+  document.getElementById('voiceStatusTitle').textContent='❌ Error';
+  if(e.error==='not-allowed'){
+      document.getElementById('voiceTranscript').innerHTML='<b>Permiso denegado.</b><br>Debes permitir el uso del micrófono en tu navegador.';
+  } else {
+      document.getElementById('voiceTranscript').textContent='No te escuché bien, inténtalo de nuevo.';
+  }
+ }
+ 
+ recognition.onresult=e=>{
+  const isFinal = e.results[0].isFinal;
+  const text=e.results[0][0].transcript;
+  document.getElementById('voiceTranscript').textContent=text;
+  if(isFinal) processVoiceCommand(text);
+ }
+} else {
+  // Fallback si el navegador no soporta Web Speech API
+  document.getElementById('fabMic').onclick = () => {
+      alert("Tu navegador no soporta el reconocimiento de voz. Usa Google Chrome o Edge en un entorno seguro (HTTPS).");
+  }
+}
+
+if(recognition){
+    document.getElementById('fabMic').onclick=()=>{
+     if(listening) stopVoice(); else recognition.start();
+    };
+}
+
+function stopVoice() {
+    if(recognition && listening) recognition.stop();
+    closeModal('voiceModal');
+}
+
+function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+// Mejora crucial: Búsqueda flexible por palabras clave del PMV
+function fuzzyFindProduct(text){
+ const n = normalizeStr(text);
+ const keywords = {
+     'volcan': '001', 'finca': '002', 'mujeres': '003', 
+     'origen': '004', 'narino': '004', 'colina': '005'
+ };
+ for(let key in keywords){
+     if(n.includes(key)) return product(keywords[key]);
+ }
+ return null;
+}
+
+function extractNumber(text, defaultVal = 0) {
+    const nums = text.replace(/\$/g,'').replace(/\./g,'').replace(/,/g,'.').match(/\d+(?:\.\d+)?/g);
+    return nums ? Number(nums[nums.length-1]) : defaultVal;
+}
+
+function processVoiceCommand(text){
+ const n=normalizeStr(text);
+ const voicePreview = document.getElementById('voicePreview');
+ voicePreview.hidden = false;
+ 
+ // 1. Determinar tipo de operación
+ let kind=null;
+ if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind='expense'; }
+ else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind='purchase'; }
+ else if(n.includes('venta') || n.includes('vendi') || n.includes('vender')){ kind='sale'; }
+
+ if(!kind){
+  voicePreview.innerHTML=`<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No entendí la acción.</b><br>Debes decir "Vendí...", "Compré..." o "Gasto de..."</div>`;
+  return;
+ }
+
+ // 2. Extraer método de pago
+ let payment='Efectivo';
+ if(n.includes('nequi')) payment='Nequi';
+ else if(n.includes('transferencia')) payment='Transferencia';
+ else if(n.includes('credito') || n.includes('debi')) payment='Crédito';
+
+ // Flujo para Gastos
+ if(kind==='expense'){
+  // Intentar capturar descripción del gasto "gasto de X por Y"
+  const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
+  let desc = descMatch ? descMatch[1].trim() : 'Gasto general';
+  
+  const total = extractNumber(n);
+  if(total === 0){
+      voicePreview.innerHTML=`<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Gasto de luz por 50000".</div>`;
+      return;
+  }
+
+  voicePreview.innerHTML=`
+   <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+        <span class="badge danger">Gasto Operativo</span>
+        <b>${money(total)}</b>
+    </div>
+    <div style="color:var(--text); margin-bottom:16px"><b>Descripción:</b> ${desc}<br><b>Pago:</b> ${payment}</div>
+    <button class="btn btn-primary" style="width:100%" onclick='applyVoiceExpense("${desc}",${total},"${payment}")'>Confirmar Gasto</button>
+   </div>`;
+  return;
+ }
+
+ // Flujo para Ventas y Compras
+ const p = fuzzyFindProduct(text);
+ if(!p){
+  voicePreview.innerHTML=`<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b><br>Asegúrate de decir "Volcán", "Finca", "Colina", etc.</div>`;
+  return;
+ }
+
+ // Extraer Cantidad (asumimos que la cantidad es el primer número pequeño que aparezca)
+ let qty = 1;
+ const words = n.split(' ');
+ for(let w of words){
+     if(!isNaN(w) && parseInt(w) > 0 && parseInt(w) < 1000){ qty = parseInt(w); break; }
+ }
+
+ // Extraer Precio (buscamos un patrón de precio o tomamos el de BD)
+ let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); // Buscar número después de la cantidad
+ if(!amount || amount === qty || amount < 100) { 
+     amount = (kind==='sale' ? p.sale : p.cost); 
+ }
+ 
+ const total = qty * amount;
+
+ voicePreview.innerHTML=`
+   <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+        <span class="badge ${kind==='sale'?'ok':'warn'}">${kind==='sale'?'Venta':'Compra'}</span>
+        <b style="font-size:18px">${money(total)}</b>
+    </div>
+    <div style="color:var(--text); margin-bottom:16px; line-height:1.5">
+        <b>Producto:</b> ${p.name}<br>
+        <b>Detalle:</b> ${qty} unid. a ${money(amount)} c/u<br>
+        <b>Método:</b> ${payment}
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick='applyVoiceOp("${kind}","${p.id}",${qty},${amount},"${payment}")'>Confirmar Operación</button>
+   </div>`;
+}
+
+function applyVoiceExpense(desc,total,payment){
+ state.expenses.unshift({id:'e'+Date.now(),date:today,description:desc,total,payment,type:payment==='Crédito'?'Crédito':'Contado'});
+ save(); render(); closeModal('voiceModal'); showToast('Gasto registrado por voz');
+}
+
+function applyVoiceOp(kind,pid,qty,amount,payment){
+ const p=product(pid), total=qty*amount, type=payment==='Crédito'?'Crédito':'Contado';
+ if(kind==='sale'){
+     if(qty>p.stock){showToast('Error: Stock insuficiente'); return;}
+     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock-=qty;
+ } else {
+     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock+=qty;
+ }
+ save(); render(); closeModal('voiceModal'); showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz');
+}
+</script>
+</body>
+</html>
