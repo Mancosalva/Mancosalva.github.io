@@ -561,7 +561,16 @@ function go(section, addHistory=true){
  render(); window.scrollTo({top:0,behavior:'smooth'});
 }
 // Cada sección funciona como una vista interna: Atrás del celular navega entre vistas, no abandona la app.
-window.addEventListener('popstate',e=>go(e.state?.section || location.hash.replace('#','') || 'dashboard',false));
+// En móvil, el botón Atrás desde cualquier módulo vuelve al inicio (Dashboard).
+window.addEventListener('popstate',e=>{
+ const current=document.querySelector('.section.active')?.id;
+ if(current!=='dashboard'){
+   go('dashboard',false);
+   history.replaceState({section:'dashboard'},'', '#dashboard');
+ } else {
+   go('dashboard',false);
+ }
+});
 const initialSection=location.hash.replace('#','');
 history.replaceState({section:pageMeta[initialSection]?initialSection:'dashboard'},'',pageMeta[initialSection]?location.hash:'#dashboard');
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
@@ -1318,23 +1327,42 @@ function wordsToNumber(text){
 }
 
 function extractNumber(text, defaultVal = 0) {
-    let pre = text
-        .replace(/(\d+)\s*millones\b/g, (_, d) => String(Number(d) * 1000000))
-        .replace(/(\d+)\s*millon\b/g, (_, d) => String(Number(d) * 1000000))
-        .replace(/(\d+)\s*mil\b/g, (_, d) => String(Number(d) * 1000));
+    // Normaliza frases como "8 millones 450 mil" => 8450000
+    const normalized = normalizeStr(String(text))
+      .replace(/pesos|cop|dolares/g,' ')
+      .replace(/[,]/g,'.');
 
-    let cleaned = pre.replace(/\$/g,'');
-    let prev;
-    do {
-        prev = cleaned;
-        cleaned = cleaned.replace(/(\d)[.,\s](\d)/g, '$1$2');
-    } while(cleaned !== prev);
+    // Primero intenta interpretar cantidades con escalas (millones / mil).
+    const scaleRegex = /(\d+(?:\.\d+)?)\s*(millones|millon|mil)\b/g;
+    let match, scaledTotal = 0, foundScale = false;
+    while((match = scaleRegex.exec(normalized)) !== null){
+      const value = Number(match[1]);
+      const scale = match[2].startsWith('millon') ? 1000000 : 1000;
+      scaledTotal += value * scale;
+      foundScale = true;
+    }
+    if(foundScale && scaledTotal > 0) return Math.round(scaledTotal);
 
-    const nums = cleaned.match(/\d+/g);
-    if(nums) return Number(nums[nums.length-1]);
+    // Cantidades escritas con separadores: 8.450.000, 8 450 000, 8450000.
+    const compactCandidates = normalized.match(/\d{1,3}(?:[.\s]\d{3})+(?!\d)|\d{4,}/g);
+    if(compactCandidates && compactCandidates.length){
+      const raw = compactCandidates[compactCandidates.length-1];
+      return Number(raw.replace(/[^\d]/g,''));
+    }
 
-    const wordVal = wordsToNumber(text);
+    const nums = normalized.match(/\d+/g);
+    if(nums && nums.length) return Number(nums[nums.length-1]);
+
+    const wordVal = wordsToNumber(normalized);
     return wordVal !== null ? wordVal : defaultVal;
+}
+function extractClientName(text){
+ const patterns=[
+   /(?:cliente|para)\s+([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s]{2,}?)(?=\s+(?:por|de|en|con|pago|efectivo|nequi|transferencia|tarjeta|credito)|$)/i,
+   /(?:a nombre de)\s+([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s]{2,}?)(?=\s+(?:por|de|en|con)|$)/i
+ ];
+ for(const p of patterns){ const m=String(text).match(p); if(m) return m[1].trim(); }
+ return '';
 }
 
 function processVoiceCommand(text){
@@ -1457,6 +1485,7 @@ function processVoiceCommand(text){
         <b>Detalle:</b> ${qty} unid. a ${money(amount)} c/u<br>
         <b>Método:</b> ${payment}
     </div>
+    ${kind==='sale'?`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Cliente <span class="muted">(opcional)</span></label><input id="voiceClientName" placeholder="Ej. Tienda Don Jorge" value="${escapeHtml(extractClientName(text))}"></div>`:''}
     <button class="btn btn-primary" style="width:100%" onclick='applyVoiceOp("${kind}","${p.id}",${qty},${amount},"${payment}")'>Confirmar Operación</button>
    </div>`;
 }
@@ -1500,7 +1529,9 @@ function applyVoiceOp(kind,pid,qty,amount,payment){
  const p = product(pid), total = qty*amount, type = payment==='Crédito'?'Crédito':'Contado';
  if(kind === 'sale'){
      if(qty > p.stock){ showToast('Error: Stock insuficiente'); return; }
-     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock -= qty;
+     const clientInput=document.getElementById('voiceClientName');
+     const client=(clientInput?.value.trim()) || 'Cliente mostrador';
+     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type,client}); p.stock -= qty;
  } else {
      state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock += qty;
  }
