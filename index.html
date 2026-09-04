@@ -751,12 +751,6 @@ if(SpeechRecognition){
  };
 
  recognition.onresult = e => {
-  // IMPORTANTE: en varios navegadores/celulares (Android sobre todo), el motor de voz
-  // no manda fragmentos nuevos como "final" — manda la MISMA frase completa creciendo
-  // varias veces ("compre" -> "compre 10" -> "compre 10 unidades" -> ...) y cada una
-  // marcada como final. Si las sumamos todas, el texto se duplica. Por eso, cada vez
-  // que un resultado final YA CONTIENE lo que teníamos antes, lo REEMPLAZAMOS (es una
-  // versión más completa de lo mismo), en vez de pegarlo al final.
   let interim = '';
   for(let i = 0; i < e.results.length; i++){
    const result = e.results[i];
@@ -766,12 +760,9 @@ if(SpeechRecognition){
     const normNew = normalizeStr(transcript);
     const normCurrent = normalizeStr(finalTranscript.trim());
     if(!normCurrent || normNew.includes(normCurrent)){
-     // Es la misma frase, más completa/corregida: reemplaza, no duplica
      finalTranscript = transcript;
     } else if(normCurrent.includes(normNew)){
-     // Ya teníamos algo igual o más completo: lo ignoramos
     } else {
-     // Contenido genuinamente distinto (otra frase nueva): lo agregamos
      finalTranscript = finalTranscript.trim() + ' ' + transcript;
     }
    } else {
@@ -782,7 +773,6 @@ if(SpeechRecognition){
   updateTranscriptView();
  };
 
- // Se disparó el reconocimiento (recibió audio) pero no logró identificar ninguna palabra
  recognition.onnomatch = () => {
   console.warn('SpeechRecognition: onnomatch — recibió audio pero no reconoció palabras');
  };
@@ -790,7 +780,6 @@ if(SpeechRecognition){
  recognition.onerror = e => {
   console.warn('SpeechRecognition error:', e.error);
   if(e.error === 'no-speech' || e.error === 'aborted'){
-   // silencio momentáneo: no cortamos toda la sesión, el usuario decide con "Confirmar"
    return;
   }
   listening = false;
@@ -838,7 +827,6 @@ if(SpeechRecognition){
   }
  };
 
- // Aviso temprano si la página no está en un contexto seguro (el micrófono no funciona sin https)
  if(!window.isSecureContext){
   console.warn('ContaVoz: esta página no está en un contexto seguro (https). El micrófono probablemente será bloqueado por el navegador.');
   document.getElementById('fabMic').title = 'El micrófono requiere https:// — ábrelo con un servidor seguro';
@@ -859,7 +847,7 @@ if(recognition){
 function stopVoice() {
  voiceCancelled = true;
  if(recognition && listening){
-  recognition.stop(); // onend detectará voiceCancelled y no procesará el texto
+  recognition.stop();
  } else {
   setMicBar(0, false);
  }
@@ -867,10 +855,9 @@ function stopVoice() {
 }
 
 function confirmVoice() {
- // El usuario decide que ya terminó de hablar: cerramos la escucha y procesamos lo dicho
  voiceCancelled = false;
  if(recognition && listening){
-  recognition.stop(); // dispara onend, que procesa finalTranscript + interimBuffer
+  recognition.stop();
  } else {
   const text = (finalTranscript + interimBuffer).trim();
   if(text) processVoiceCommand(text);
@@ -889,9 +876,6 @@ function restartVoice() {
 
 function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-// Categorías de gasto reconocidas por voz. El orden importa: las más específicas van
-// primero para que "seguridad social" no quede capturada por la palabra suelta "seguridad"
-// (que pertenece a Vigilancia).
 const expenseCategories = [
  { name:'Seguridad Social', keys:['seguridad social','eps','pension','planilla'] },
  { name:'Nómina',           keys:['nomina','sueldo','salario','empleado','empleados','pago de personal'] },
@@ -930,9 +914,6 @@ function fuzzyFindProduct(text){
  return null;
 }
 
-// Palabras numéricas en español (para cuando el reconocedor de voz transcribe el monto
-// como texto: "cien mil", "un millón doscientos mil", "treinta y cinco mil", etc.)
-// Las claves van sin tildes porque este texto siempre pasa por normalizeStr() antes.
 const numberWords = {
     'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,
     'diez':10,'once':11,'doce':12,'trece':13,'catorce':14,'quince':15,
@@ -945,9 +926,6 @@ const numberWords = {
 };
 const numberScales = { 'mil':1000, 'millon':1000000, 'millones':1000000 };
 
-// Convierte un número escrito en palabras ("cien mil", "un millon doscientos mil") a entero.
-// Las palabras que no reconoce (nombres de producto, "pesos", "por", "y", etc.) se ignoran,
-// así que puede recibir la frase completa sin necesidad de aislar primero el monto.
 function wordsToNumber(text){
     const words = text.split(/\s+/);
     let total = 0, current = 0, found = false;
@@ -966,19 +944,11 @@ function wordsToNumber(text){
 }
 
 function extractNumber(text, defaultVal = 0) {
-    // Los montos de esta app son pesos colombianos SIN decimales. El reconocedor de voz a
-    // veces devuelve los números grandes con coma como separador de miles ("500,000"), otras
-    // veces con punto ("500.000"), otras con espacio ("500 000"), y a veces los dicta
-    // completamente en palabras ("cien mil"), sin que dependa de nuestro idioma configurado.
-    // Primero resolvemos combinaciones dígito + palabra escala ("20 mil" -> 20000, "2 millones" -> 2000000).
     let pre = text
         .replace(/(\d+)\s*millones\b/g, (_, d) => String(Number(d) * 1000000))
         .replace(/(\d+)\s*millon\b/g, (_, d) => String(Number(d) * 1000000))
         .replace(/(\d+)\s*mil\b/g, (_, d) => String(Number(d) * 1000));
 
-    // Luego quitamos CUALQUIER punto, coma o espacio que esté entre dígitos (separador de
-    // miles), sin asumir cuál de los tres se usó. Se repite hasta que no cambie más, para
-    // que también funcione con varios grupos ("1.000.000" o "1 000 000").
     let cleaned = pre.replace(/\$/g,'');
     let prev;
     do {
@@ -989,7 +959,6 @@ function extractNumber(text, defaultVal = 0) {
     const nums = cleaned.match(/\d+/g);
     if(nums) return Number(nums[nums.length-1]);
 
-    // Si no hay ningún dígito, intentamos leer el monto escrito completamente en palabras.
     const wordVal = wordsToNumber(text);
     return wordVal !== null ? wordVal : defaultVal;
 }
@@ -999,8 +968,6 @@ function processVoiceCommand(text){
  const voicePreview = document.getElementById('voicePreview');
  voicePreview.hidden = false;
 
- // El orden importa: las frases más específicas (abonos y pagos de deuda) se revisan
- // antes que "gasto"/"compra"/"venta" para que no queden mal clasificadas.
  let kind = null;
  const mentionsProveedor = n.includes('proveedor');
  const mentionsDeudaGasto = (n.includes('deuda') || n.includes('abono')) && n.includes('gasto');
