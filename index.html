@@ -479,15 +479,23 @@ if(SpeechRecognition){
  };
 
  recognition.onresult = e => {
-  interimBuffer = '';
-  for(let i = e.resultIndex; i < e.results.length; i++){
+  // IMPORTANTE: e.results trae SIEMPRE la lista completa acumulada desde que empezó
+  // la escucha (no solo lo nuevo). Antes sumábamos con "+=" cada vez que llegaba un
+  // evento, y como el navegador a veces reenvía el mismo resultado "final" más de una
+  // vez, el texto se duplicaba (ej. "vendí vendí 10 vendí 10 unidades..."). Ahora
+  // reconstruimos todo desde cero en cada evento, así nunca se repite nada.
+  let newFinal = '';
+  let newInterim = '';
+  for(let i = 0; i < e.results.length; i++){
    const transcript = e.results[i][0].transcript;
    if(e.results[i].isFinal){
-    finalTranscript += transcript + ' ';
+    newFinal += transcript + ' ';
    } else {
-    interimBuffer += transcript;
+    newInterim += transcript;
    }
   }
+  finalTranscript = newFinal;
+  interimBuffer = newInterim;
   updateTranscriptView();
  };
 
