@@ -422,9 +422,9 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
 // =========================================================
 // ⚠️ REEMPLAZA ESTO CON TUS CREDENCIALES DE SUPABASE ⚠️
 // =========================================================
-const SUPABASE_URL = 'https://xqndsipnequhrwyffxuw.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://xqndsipnequhrwyffxuw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_sF3ooZ525JOCXp-SF6cncQ_01nOeGSZ';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // =========================================================
 
 const today = new Date().toISOString().slice(0,10);
@@ -442,13 +442,13 @@ async function loadStateFromSupabase() {
       { data: products }, { data: purchases }, { data: sales },
       { data: expenses }, { data: collections }, { data: supplierPayments }, { data: expensePayments }
     ] = await Promise.all([
-      supabase.from('products').select('*'),
-      supabase.from('purchases').select('*'),
-      supabase.from('sales').select('*'),
-      supabase.from('expenses').select('*'),
-      supabase.from('collections').select('*'),
-      supabase.from('supplier_payments').select('*'),
-      supabase.from('expense_payments').select('*')
+      supabaseClient.from('products').select('*'),
+      supabaseClient.from('purchases').select('*'),
+      supabaseClient.from('sales').select('*'),
+      supabaseClient.from('expenses').select('*'),
+      supabaseClient.from('collections').select('*'),
+      supabaseClient.from('supplier_payments').select('*'),
+      supabaseClient.from('expense_payments').select('*')
     ]);
 
     // Mapeo de snake_case a camelCase para mantener la compatibilidad del frontend
@@ -586,7 +586,7 @@ function newExpense(){
  document.getElementById('expenseForm').onsubmit = async e => {
     e.preventDefault();
     const id = 'e' + Date.now();
-    await supabase.from('expenses').insert([{ id, date: eDate.value, description: eDesc.value.trim(), total: +eTotal.value, payment: ePayment.value, type: ePayment.value === 'Crédito' ? 'Crédito' : 'Contado' }]);
+    await supabaseClient.from('expenses').insert([{ id, date: eDate.value, description: eDesc.value.trim(), total: +eTotal.value, payment: ePayment.value, type: ePayment.value === 'Crédito' ? 'Crédito' : 'Contado' }]);
     closeModal('modal'); await loadStateFromSupabase(); showToast('Gasto registrado');
  }
 }
@@ -603,7 +603,7 @@ function newProduct(){
  document.getElementById('productForm').onsubmit = async e => {
     e.preventDefault();
     if(product(pId.value)) return showToast('Código ya existe');
-    await supabase.from('products').insert([{ id: pId.value.trim(), name: pName.value.trim(), stock: +pStock.value, cost: +pCost.value, sale: +pSale.value, min_stock: +pMinStock.value||0, expiry: pExpiry.value||null }]);
+    await supabaseClient.from('products').insert([{ id: pId.value.trim(), name: pName.value.trim(), stock: +pStock.value, cost: +pCost.value, sale: +pSale.value, min_stock: +pMinStock.value||0, expiry: pExpiry.value||null }]);
     closeModal('modal'); await loadStateFromSupabase(); showToast('Producto creado');
  }
 }
@@ -621,7 +621,7 @@ function editProduct(id){
  openModal('modal');
  document.getElementById('editProductForm').onsubmit = async e => {
     e.preventDefault();
-    await supabase.from('products').update({ name: epName.value.trim(), cost: +epCost.value, sale: +epSale.value, min_stock: +epMinStock.value||0, expiry: epExpiry.value||null }).eq('id', p.id);
+    await supabaseClient.from('products').update({ name: epName.value.trim(), cost: +epCost.value, sale: +epSale.value, min_stock: +epMinStock.value||0, expiry: epExpiry.value||null }).eq('id', p.id);
     closeModal('modal'); await loadStateFromSupabase(); showToast('Producto actualizado');
  }
 }
@@ -640,7 +640,7 @@ function adjustStock(id){
     e.preventDefault();
     const qty = +ajQty.value, delta = ajTipo.value === 'in' ? qty : -qty;
     if(p.stock+delta<0){showToast('El ajuste dejaría el stock en negativo');return}
-    await supabase.from('products').update({ stock: p.stock+delta }).eq('id', p.id);
+    await supabaseClient.from('products').update({ stock: p.stock+delta }).eq('id', p.id);
     closeModal('modal'); await loadStateFromSupabase(); showToast('Inventario ajustado ('+ajMotivo.value+')');
  }
 }
@@ -722,9 +722,9 @@ function setupDebtPaymentForm(type){
   const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
   const common = { id, date: debtDate.value, amount, payment: debtPayment.value, note: debtNote.value.trim(), debt_id: d.id };
   
-  if(type==='client') await supabase.from('collections').insert([{...common, client: d.party }]);
-  if(type==='supplier') await supabase.from('supplier_payments').insert([{...common, supplier: d.party }]);
-  if(type==='expense') await supabase.from('expense_payments').insert([{...common, description: d.party }]);
+  if(type==='client') await supabaseClient.from('collections').insert([{...common, client: d.party }]);
+  if(type==='supplier') await supabaseClient.from('supplier_payments').insert([{...common, supplier: d.party }]);
+  if(type==='expense') await supabaseClient.from('expense_payments').insert([{...common, description: d.party }]);
   
   closeModal('modal'); await loadStateFromSupabase(); showToast('Pago aplicado a la deuda');
  };
@@ -752,12 +752,12 @@ document.addEventListener('submit', async e => {
   const newStock = isSale ? p.stock - qty : p.stock + qty;
   
   if(isSale){
-    await supabase.from('sales').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, client: party||'Cliente mostrador' }]);
+    await supabaseClient.from('sales').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, client: party||'Cliente mostrador' }]);
   } else {
-    await supabase.from('purchases').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, supplier: party||'Proveedor general' }]);
+    await supabaseClient.from('purchases').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, supplier: party||'Proveedor general' }]);
   }
   
-  await supabase.from('products').update({ stock: newStock }).eq('id', pid);
+  await supabaseClient.from('products').update({ stock: newStock }).eq('id', pid);
   closeModal('modal'); await loadStateFromSupabase(); showToast(isSale ? 'Venta registrada' : 'Compra registrada');
  }
 });
@@ -768,22 +768,22 @@ async function del(type, id){
     const x=state.sales.find(v=>v.id===id);
     if(x){
         const p = product(x.productId);
-        await supabase.from('products').update({stock: p.stock+x.qty}).eq('id', x.productId);
+        await supabaseClient.from('products').update({stock: p.stock+x.qty}).eq('id', x.productId);
     }
-    await supabase.from('sales').delete().eq('id',id);
+    await supabaseClient.from('sales').delete().eq('id',id);
  }
  else if(type==='purchase'){
     const x=state.purchases.find(v=>v.id===id);
     if(x){
         const p = product(x.productId);
-        await supabase.from('products').update({stock: p.stock-x.qty}).eq('id', x.productId);
+        await supabaseClient.from('products').update({stock: p.stock-x.qty}).eq('id', x.productId);
     }
-    await supabase.from('purchases').delete().eq('id',id);
+    await supabaseClient.from('purchases').delete().eq('id',id);
  }
- else if(type==='expense') await supabase.from('expenses').delete().eq('id',id);
- else if(type==='collection') await supabase.from('collections').delete().eq('id',id);
- else if(type==='supplierPayment') await supabase.from('supplier_payments').delete().eq('id',id);
- else if(type==='expensePayment') await supabase.from('expense_payments').delete().eq('id',id);
+ else if(type==='expense') await supabaseClient.from('expenses').delete().eq('id',id);
+ else if(type==='collection') await supabaseClient.from('collections').delete().eq('id',id);
+ else if(type==='supplierPayment') await supabaseClient.from('supplier_payments').delete().eq('id',id);
+ else if(type==='expensePayment') await supabaseClient.from('expense_payments').delete().eq('id',id);
  
  await loadStateFromSupabase(); showToast('Registro eliminado');
 }
@@ -1020,7 +1020,7 @@ function processVoiceCommand(text){
 
 async function applyVoiceExpense(desc,total,payment){
  const id = 'e'+Date.now();
- await supabase.from('expenses').insert([{ id, date:today, description:desc, total, payment, type:payment==='Crédito'?'Crédito':'Contado' }]);
+ await supabaseClient.from('expenses').insert([{ id, date:today, description:desc, total, payment, type:payment==='Crédito'?'Crédito':'Contado' }]);
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Gasto registrado por voz');
 }
 
@@ -1029,9 +1029,9 @@ async function applyVoiceDebtPayment(type,total,payment){
  if(!d)return showToast('No se encontró deuda'); if(total>d.remaining)return showToast('El pago supera la deuda');
  const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
  const common = { id, date:today, amount:total, payment, note:'Registrado por voz', debt_id:d.id };
- if(type==='client') await supabase.from('collections').insert([{...common, client:d.party}]);
- if(type==='supplier') await supabase.from('supplier_payments').insert([{...common, supplier:d.party}]);
- if(type==='expense') await supabase.from('expense_payments').insert([{...common, description:d.party}]);
+ if(type==='client') await supabaseClient.from('collections').insert([{...common, client:d.party}]);
+ if(type==='supplier') await supabaseClient.from('supplier_payments').insert([{...common, supplier:d.party}]);
+ if(type==='expense') await supabaseClient.from('expense_payments').insert([{...common, description:d.party}]);
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Pago aplicado');
 }
 
@@ -1040,12 +1040,12 @@ async function applyVoiceOp(kind,pid,qty,amount,payment){
  if(kind === 'sale'){
      if(qty > p.stock){ showToast('Stock insuficiente'); return; }
      const id = 's'+Date.now();
-     await supabase.from('sales').insert([{ id, date:today, product_id:pid, qty, total, payment, type, client: 'Cliente voz' }]);
-     await supabase.from('products').update({stock: p.stock - qty}).eq('id', pid);
+     await supabaseClient.from('sales').insert([{ id, date:today, product_id:pid, qty, total, payment, type, client: 'Cliente voz' }]);
+     await supabaseClient.from('products').update({stock: p.stock - qty}).eq('id', pid);
  } else {
      const id = 'p'+Date.now();
-     await supabase.from('purchases').insert([{ id, date:today, product_id:pid, qty, total, payment, type, supplier: 'Proveedor voz' }]);
-     await supabase.from('products').update({stock: p.stock + qty}).eq('id', pid);
+     await supabaseClient.from('purchases').insert([{ id, date:today, product_id:pid, qty, total, payment, type, supplier: 'Proveedor voz' }]);
+     await supabaseClient.from('products').update({stock: p.stock + qty}).eq('id', pid);
  }
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast((kind==='sale'?'Venta':'Compra')+' registrada');
 }
