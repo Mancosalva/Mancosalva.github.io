@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ContaVoz — Gestión inteligente para microempresas</title>
 <meta name="description" content="ContaVoz: PMV para registrar ingresos, compras, gastos, inventario y reportes mediante voz.">
-<!-- Agregamos Chart.js para las gráficas -->
+<!-- Chart.js para las gráficas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- SDK de Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#f4f7f6; --surface:#ffffff; --surface2:#eef2f7; --text:#111827; --muted:#4b5563;
@@ -89,14 +91,11 @@ td b{color:#111827}
 .toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 .mobile-head{display:none}
 .menu-btn{border:0;background:transparent;color:var(--text);font-size:22px;padding:6px 10px;border-radius:10px;line-height:1;display:flex;align-items:center;justify-content:center}
-.menu-btn:active{background:rgba(0,0,0,0.08)}
 .sidebar-close{display:none}
 .drawer-backdrop{position:fixed;inset:0;background:rgba(17,24,39,0.55);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:55}
 .drawer-backdrop.open{opacity:1;pointer-events:auto}
 .chart-container{position:relative; height:250px; width:100%; margin-top:16px}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
-
-/* ---- Modo móvil: portátil u horizontal (celulares) ---- */
 @media (max-width:900px), (orientation:landscape) and (max-height:520px){
   .sidebar{
     position:fixed;top:0;left:0;height:100vh;width:min(260px,80vw);
@@ -112,19 +111,8 @@ td b{color:#111827}
   .topbar{flex-direction:column;align-items:flex-start}
   .fab-mic{bottom:18px;right:18px;width:56px;height:56px;font-size:24px}
 }
-/* Celular vertical angosto: KPIs a 1 columna */
-@media (max-width:480px) and (orientation:portrait){
-  .kpis{grid-template-columns:1fr}
-}
-/* Celular horizontal (poca altura): compactar aún más */
-@media (orientation:landscape) and (max-height:520px){
-  .content{padding:14px}
-  .fab-mic{bottom:12px;right:12px;width:48px;height:48px;font-size:20px}
-  .modal-box{max-height:85vh;padding:24px}
-  .sidebar{padding:16px}
-}
-
-/* ---- Selector de periodo (diario/semanal/mensual) ---- */
+@media (max-width:480px) and (orientation:portrait){.kpis{grid-template-columns:1fr}}
+@media (orientation:landscape) and (max-height:520px){.content{padding:14px}.fab-mic{bottom:12px;right:12px;width:48px;height:48px;font-size:20px}.modal-box{max-height:85vh;padding:24px}.sidebar{padding:16px}}
 .period-tabs{display:inline-flex;background:#eef2f7;border-radius:10px;padding:4px;gap:4px}
 .period-tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;color:var(--muted)}
 .period-tabs button.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.15)}
@@ -140,8 +128,6 @@ td b{color:#111827}
 .product-card-foot{display:flex;gap:8px;margin-top:12px}
 .product-card-foot .btn{flex:1;padding:8px;font-size:12px}
 @media(max-width:1050px){.mini-kpis{grid-template-columns:1fr}}
-
-/* ---------- Centro de notificaciones ---------- */
 .notification-area{position:relative}
 .notification-btn{position:relative;width:46px;height:46px;border:1px solid var(--border);background:var(--surface);border-radius:12px;font-size:22px;display:grid;place-items:center;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .notification-badge{position:absolute;right:-5px;top:-5px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
@@ -165,11 +151,7 @@ td b{color:#111827}
 .debt-select{width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:13px;cursor:pointer}
 .debt-select:hover{background:var(--surface2)}
 @media(max-width:600px){.notification-panel{position:fixed;right:16px;top:76px;width:calc(100vw - 32px)}}
-
-
-/* ===== Fresh Mobile Ledger redesign ===== */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root{
  --bg:#FAFCFA;--surface:#fff;--surface2:#EFF4FF;--text:#0F172A;--muted:#64748B;
  --primary:#10B981;--primary2:#0F766E;--accent:#F59E0B;--danger:#F43F5E;--ok:#10B981;
@@ -201,14 +183,10 @@ body{font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;background:linea
 .voice-text,#voiceResultBox{background:#F0FDF4!important;border-color:#A7F3D0!important}
 .notification-btn{border-radius:16px}.badge.ok{background:#D1FAE5;color:#065F46}.badge.warn{background:#FEF3C7;color:#92400E}.badge.danger{background:#FFE4E6;color:#9F1239}
 .report-total{font-variant-numeric:tabular-nums}.chart-container{padding-top:4px}
-
 @media(max-width:900px){
  .content{padding:20px 16px 90px}.topbar h2{font-size:26px}.card{border-radius:20px;padding:18px}.hero{border-radius:24px}.hero h3{font-size:24px}
  .fab-mic{bottom:20px;right:20px}
 }
-
-
-/* ===== UX polish: microinteractions, skeletons & empty states ===== */
 button,.btn,.nav button,.notification-item,.period-tabs button{transition:transform .16s ease,background-color .2s ease,color .2s ease,box-shadow .2s ease,filter .2s ease}
 button:active,.btn:active,.nav button:active{transform:scale(.97)}
 .btn-primary:active{filter:brightness(.93)}
@@ -223,7 +201,6 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
 .skeleton-screen.hide{opacity:0;visibility:hidden}
 .sk-col,.sk-main{display:grid;gap:18px;align-content:start}.sk{border-radius:18px;background:linear-gradient(90deg,#edf2f7 25%,#f8fafc 50%,#edf2f7 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}.sk.logo{height:58px}.sk.nav{height:48px}.sk.title{width:45%;height:40px}.sk.hero{height:180px}.sk.kpis{height:130px}@keyframes shimmer{to{background-position:-200% 0}}
 @media(max-width:900px){.skeleton-screen{grid-template-columns:1fr;padding:18px}.sk-col{display:none}}
-
 </style>
 </head>
 <body>
@@ -242,7 +219,7 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
       <button data-section="inventario">📦 Inventario</button>
       <button data-section="reportes">📊 Reportes</button>
     </nav>
-    <div class="sidebar-footer" style="margin-top:auto"><b>Modo PMV</b><br>Datos locales en navegador.</div>
+    <div class="sidebar-footer" style="margin-top:auto"><b>Modo Nube (Supabase)</b><br>Datos sincronizados en tiempo real.</div>
   </aside>
 
   <main class="content">
@@ -261,7 +238,7 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
             <div class="notification-list" id="notificationList"></div>
           </div>
         </div>
-        <button class="btn btn-light" id="resetBtn">↺ Restaurar Datos</button>
+        <button class="btn btn-light" id="resetBtn">↺ Recargar Datos</button>
       </div>
     </div>
 
@@ -408,7 +385,6 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
   </main>
 </div>
 <div id="drawerBackdrop" class="drawer-backdrop"></div>
-
 <div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h3 id="modalTitle">Nueva operación</h3><button class="close" onclick="closeModal('modal')">×</button></div><div id="modalBody"></div></div></div>
 
 <!-- Modal Voz con Grabación por Fases (Primero recibe, luego interpreta) -->
@@ -443,82 +419,61 @@ button:active,.btn:active,.nav button:active{transform:scale(.97)}
 <button id="fabMic" class="fab-mic" title="Registrar por voz">🎙️</button>
 
 <script>
-const KEY='contavoz_state_v5';
-const today=new Date().toISOString().slice(0,10);
+// =========================================================
+// ⚠️ REEMPLAZA ESTO CON TUS CREDENCIALES DE SUPABASE ⚠️
+// =========================================================
+const SUPABASE_URL = 'https://xqndsipnequhrwyffxuw.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_sF3ooZ525JOCXp-SF6cncQ_01nOeGSZ';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// =========================================================
+
+const today = new Date().toISOString().slice(0,10);
 function addDays(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 
-const demoProducts=[
- {id:'1',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460,minStock:15,expiry:addDays(today,180)},
- {id:'2',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780,minStock:15,expiry:addDays(today,10)},
- {id:'3',name:'Café Mujeres Cafeteras en granos 454gr',stock:50,cost:45780,sale:65780,minStock:15,expiry:''},
- {id:'4',name:'Café Origen Nariño en granos 454gr',stock:8,cost:45780,sale:65780,minStock:15,expiry:''},
- {id:'5',name:'Café Colina en grano 454gr',stock:50,cost:36650,sale:56650,minStock:15,expiry:''}
-];
-const demoPurchases=[
- {id:'p1',date:today,productId:'1',qty:100,total:1146000,payment:'Efectivo',type:'Contado',supplier:'Cooperativa Volcán'},
- {id:'p2',date:today,productId:'2',qty:150,total:6867000,payment:'Nequi',type:'Contado',supplier:'Finca La Esperanza'},
- {id:'p3',date:today,productId:'3',qty:200,total:9156000,payment:'Nequi',type:'Contado',supplier:'Mujeres Cafeteras'},
- {id:'p4',date:today,productId:'4',qty:250,total:11445000,payment:'Crédito',type:'Crédito',supplier:'Origen Nariño SAS'},
- {id:'p5',date:today,productId:'5',qty:300,total:10995000,payment:'Crédito',type:'Crédito',supplier:'Finca La Colina'}
-];
-const demoSales=[
- {id:'s1',date:today,productId:'1',qty:50,total:1573000,payment:'Efectivo',type:'Contado',client:'Cliente mostrador'},
- {id:'s2',date:today,productId:'2',qty:100,total:6578000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
- {id:'s3',date:today,productId:'3',qty:150,total:9867000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
- {id:'s4',date:today,productId:'4',qty:200,total:13156000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
- {id:'s5',date:today,productId:'5',qty:250,total:14162500,payment:'Crédito',type:'Crédito',client:'Tienda Don Jorge'}
-];
-const demoExpenses=[
- ['Agua',100000,'Contado'],['Luz',70000,'Contado'],['Internet',150000,'Contado'],['Nomina',2000000,'Contado'],['Seguridad Social',500000,'Contado'],['Arriendo',2000000,'Crédito'],['Útiles de Aseo',50000,'Contado'],['Vigilancia',70000,'Contado']
-].map((x,i)=>({id:'e'+i,date:today,description:x[0],total:x[1],payment:x[2]==='Crédito'?'Crédito':'Nequi',type:x[2]}));
-const demoCollections=[
- {id:'c1',date:today,client:'Tienda Don Jorge',amount:4000000,payment:'Nequi',note:'Primer abono'}
-];
-const demoSupplierPayments=[
- {id:'sp1',date:today,supplier:'Origen Nariño SAS',amount:3000000,payment:'Transferencia',note:'Abono factura'}
-];
-const demoExpensePayments=[];
-
 function defaultState(){return {
- products:structuredClone(demoProducts),purchases:structuredClone(demoPurchases),sales:structuredClone(demoSales),
- expenses:structuredClone(demoExpenses),collections:structuredClone(demoCollections),
- supplierPayments:structuredClone(demoSupplierPayments),expensePayments:structuredClone(demoExpensePayments)
+ products:[], purchases:[], sales:[], expenses:[], collections:[], supplierPayments:[], expensePayments:[]
 }}
-let state=load();
-function load(){
- try{
-  const x=JSON.parse(localStorage.getItem(KEY));
-  if(!x) return defaultState();
-  x.collections=x.collections||[]; x.supplierPayments=x.supplierPayments||[]; x.expensePayments=x.expensePayments||[];
-  x.products.forEach(p=>{ if(p.minStock===undefined) p.minStock=10; if(p.expiry===undefined) p.expiry=''; });
-  migrateLegacyPayments(x);
-  return x;
- }catch(e){return defaultState()}
+
+let state = defaultState();
+
+async function loadStateFromSupabase() {
+  try {
+    const [
+      { data: products }, { data: purchases }, { data: sales },
+      { data: expenses }, { data: collections }, { data: supplierPayments }, { data: expensePayments }
+    ] = await Promise.all([
+      supabase.from('products').select('*'),
+      supabase.from('purchases').select('*'),
+      supabase.from('sales').select('*'),
+      supabase.from('expenses').select('*'),
+      supabase.from('collections').select('*'),
+      supabase.from('supplier_payments').select('*'),
+      supabase.from('expense_payments').select('*')
+    ]);
+
+    // Mapeo de snake_case a camelCase para mantener la compatibilidad del frontend
+    state = {
+      products: (products || []).map(p => ({...p, minStock: p.min_stock})),
+      purchases: (purchases || []).map(p => ({...p, productId: p.product_id})),
+      sales: (sales || []).map(s => ({...s, productId: s.product_id})),
+      expenses: expenses || [],
+      collections: (collections || []).map(c => ({...c, debtId: c.debt_id})),
+      supplierPayments: (supplierPayments || []).map(sp => ({...sp, debtId: sp.debt_id})),
+      expensePayments: (expensePayments || []).map(ep => ({...ep, debtId: ep.debt_id}))
+    };
+    render();
+  } catch (err) {
+    console.error('Error cargando BD:', err);
+    showToast('Error de conexión con la nube');
+  }
 }
-function migrateLegacyPayments(x){
- const allocate=(debts,payments,partyKey)=>{
-  const used=new Set(payments.filter(p=>p.debtId).map(p=>p.id));
-  debts.forEach(d=>{
-   let paid=payments.filter(p=>p.debtId===d.id).reduce((a,p)=>a+(Number(p.amount)||0),0);
-   payments.filter(p=>!p.debtId && normalizeStr(p[partyKey]||'')===normalizeStr(d[partyKey]||'')).sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
-    if(used.has(p.id))return;
-    const remaining=Math.max(0,d.total-paid);
-    if(remaining<=0)return;
-    p.debtId=d.id; paid+=Math.min(Number(p.amount)||0,remaining); used.add(p.id);
-   });
-  });
- };
- allocate(x.sales.filter(d=>d.type==='Crédito'),x.collections,'client');
- allocate(x.purchases.filter(d=>d.type==='Crédito'),x.supplierPayments,'supplier');
- allocate(x.expenses.filter(d=>d.type==='Crédito'),x.expensePayments,'description');
-}
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+
 function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
 function product(id){return state.products.find(p=>p.id===id)}
 function sum(arr,key){return arr.reduce((a,x)=>a+(Number(x[key])||0),0)}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
-// ---------- Filtro de periodo (diario / semanal / mensual / todo) ----------
+// ---------- Filtro de periodo ----------
 let periodState={ingresos:'dia',compras:'dia',gastos:'dia',reportes:'todo'};
 function inPeriod(dateStr,period){
  if(period==='todo') return true;
@@ -560,40 +515,34 @@ function go(section, addHistory=true){
  if(addHistory && current!==section) history.pushState({section},'',`#${section}`);
  render(); window.scrollTo({top:0,behavior:'smooth'});
 }
-// Cada sección funciona como una vista interna: Atrás del celular navega entre vistas, no abandona la app.
-// En móvil, el botón Atrás desde cualquier módulo vuelve al inicio (Dashboard).
+
 window.addEventListener('popstate',e=>{
  const current=document.querySelector('.section.active')?.id;
- if(current!=='dashboard'){
-   go('dashboard',false);
-   history.replaceState({section:'dashboard'},'', '#dashboard');
- } else {
-   go('dashboard',false);
- }
+ if(current!=='dashboard'){ go('dashboard',false); history.replaceState({section:'dashboard'},'', '#dashboard'); } 
+ else { go('dashboard',false); }
 });
 const initialSection=location.hash.replace('#','');
 history.replaceState({section:pageMeta[initialSection]?initialSection:'dashboard'},'',pageMeta[initialSection]?location.hash:'#dashboard');
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
 
-// ---------- MENÚ MÓVIL ----------
-const sidebarEl = document.querySelector('.sidebar');
-const drawerBackdrop = document.getElementById('drawerBackdrop');
-const menuBtn = document.getElementById('menuBtn');
-const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
-
+// MENÚ MÓVIL
+const sidebarEl = document.querySelector('.sidebar'), drawerBackdrop = document.getElementById('drawerBackdrop');
+const menuBtn = document.getElementById('menuBtn'), sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
 function openDrawer(){ sidebarEl.classList.add('open'); drawerBackdrop.classList.add('open'); }
 function closeDrawer(){ sidebarEl.classList.remove('open'); drawerBackdrop.classList.remove('open'); }
 function toggleDrawer(){ sidebarEl.classList.contains('open') ? closeDrawer() : openDrawer(); }
-
 if(menuBtn) menuBtn.addEventListener('click', toggleDrawer);
 if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeDrawer);
 drawerBackdrop.addEventListener('click', closeDrawer);
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click', closeDrawer));
-
 window.addEventListener('resize', ()=>{ if(window.innerWidth>900) closeDrawer(); });
-window.addEventListener('orientationchange', closeDrawer);
-document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar datos?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
+
+document.getElementById('resetBtn').onclick = async () => {
+  showToast('Recargando datos...');
+  await loadStateFromSupabase();
+  showToast('Datos sincronizados');
+}
 
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -613,7 +562,7 @@ function opForm(kind){
  return `<form id="opForm" class="form-grid">
   <div class="field full"><label>Producto</label><select id="fProduct" required>${productOptions()}</select></div>
   <div class="field"><label>Cantidad</label><input id="fQty" type="number" min="1" value="1" required></div>
-  <div class="field"><label>Precio unitario</label><input id="fPrice" type="number" min="0" value="${isSale?state.products[0].sale:state.products[0].cost}" required></div>
+  <div class="field"><label>Precio unitario</label><input id="fPrice" type="number" min="0" value="${isSale?(state.products[0]?.sale||0):(state.products[0]?.cost||0)}" required></div>
   <div class="field"><label>Forma de pago</label><select id="fPayment">${paymentOptions}</select></div>
   <div class="field"><label>Tipo</label><select id="fType"><option>Contado</option><option>Crédito</option></select></div>
   <div class="field full"><label>${isSale?'Cliente (opcional)':'Proveedor (opcional)'}</label><input id="fParty" placeholder="${isSale?'Ej. Cliente mostrador':'Ej. Distribuidora XYZ'}"></div>
@@ -621,8 +570,10 @@ function opForm(kind){
   <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">${isSale?'Registrar venta':'Registrar compra'}</button></div>
  </form>`
 }
+
 function newSale(){document.getElementById('modalTitle').textContent='Nueva venta'; document.getElementById('modalBody').innerHTML=opForm('sale'); openModal('modal'); document.getElementById('fProduct').onchange=e=>{document.getElementById('fPrice').value=product(e.target.value).sale}}
 function newPurchase(){document.getElementById('modalTitle').textContent='Nueva compra'; document.getElementById('modalBody').innerHTML=opForm('purchase'); openModal('modal'); document.getElementById('fProduct').onchange=e=>{document.getElementById('fPrice').value=product(e.target.value).cost}}
+
 function newExpense(){
  document.getElementById('modalTitle').textContent='Nuevo gasto';
  document.getElementById('modalBody').innerHTML=`<form id="expenseForm" class="form-grid">
@@ -632,8 +583,14 @@ function newExpense(){
  <div class="field"><label>Fecha</label><input id="eDate" type="date" value="${today}"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar gasto</button></div></form>`;
  openModal('modal');
- document.getElementById('expenseForm').onsubmit=e=>{e.preventDefault();state.expenses.unshift({id:'e'+Date.now(),date:eDate.value,description:eDesc.value.trim(),total:+eTotal.value,payment:ePayment.value,type:ePayment.value==='Crédito'?'Crédito':'Contado'});save();closeModal('modal');render();showToast('Gasto registrado')}
+ document.getElementById('expenseForm').onsubmit = async e => {
+    e.preventDefault();
+    const id = 'e' + Date.now();
+    await supabase.from('expenses').insert([{ id, date: eDate.value, description: eDesc.value.trim(), total: +eTotal.value, payment: ePayment.value, type: ePayment.value === 'Crédito' ? 'Crédito' : 'Contado' }]);
+    closeModal('modal'); await loadStateFromSupabase(); showToast('Gasto registrado');
+ }
 }
+
 function newProduct(){
  document.getElementById('modalTitle').textContent='Nuevo producto';
  document.getElementById('modalBody').innerHTML=`<form id="productForm" class="form-grid">
@@ -643,8 +600,14 @@ function newProduct(){
  <div class="field full"><label>Fecha de vencimiento (opcional)</label><input id="pExpiry" type="date"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Crear producto</button></div></form>`;
  openModal('modal');
- document.getElementById('productForm').onsubmit=e=>{e.preventDefault();if(product(pId.value))return showToast('Código ya existe');state.products.push({id:pId.value.trim(),name:pName.value.trim(),stock:+pStock.value,cost:+pCost.value,sale:+pSale.value,minStock:+pMinStock.value||0,expiry:pExpiry.value||''});save();closeModal('modal');render();showToast('Producto creado')}
+ document.getElementById('productForm').onsubmit = async e => {
+    e.preventDefault();
+    if(product(pId.value)) return showToast('Código ya existe');
+    await supabase.from('products').insert([{ id: pId.value.trim(), name: pName.value.trim(), stock: +pStock.value, cost: +pCost.value, sale: +pSale.value, min_stock: +pMinStock.value||0, expiry: pExpiry.value||null }]);
+    closeModal('modal'); await loadStateFromSupabase(); showToast('Producto creado');
+ }
 }
+
 function editProduct(id){
  const p=product(id); if(!p) return;
  document.getElementById('modalTitle').textContent='Editar producto: '+p.name;
@@ -656,8 +619,13 @@ function editProduct(id){
  <div class="field"><label>Fecha de vencimiento</label><input id="epExpiry" type="date" value="${p.expiry||''}"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Guardar cambios</button></div></form>`;
  openModal('modal');
- document.getElementById('editProductForm').onsubmit=e=>{e.preventDefault();p.name=epName.value.trim();p.cost=+epCost.value;p.sale=+epSale.value;p.minStock=+epMinStock.value||0;p.expiry=epExpiry.value||'';save();closeModal('modal');render();showToast('Producto actualizado')}
+ document.getElementById('editProductForm').onsubmit = async e => {
+    e.preventDefault();
+    await supabase.from('products').update({ name: epName.value.trim(), cost: +epCost.value, sale: +epSale.value, min_stock: +epMinStock.value||0, expiry: epExpiry.value||null }).eq('id', p.id);
+    closeModal('modal'); await loadStateFromSupabase(); showToast('Producto actualizado');
+ }
 }
+
 function adjustStock(id){
  const p=product(id); if(!p) return;
  document.getElementById('modalTitle').textContent='Ajuste de inventario: '+p.name;
@@ -668,14 +636,15 @@ function adjustStock(id){
  <div class="field full"><label>Stock actual: <b>${p.stock}</b></label></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Aplicar ajuste</button></div></form>`;
  openModal('modal');
- document.getElementById('adjustForm').onsubmit=e=>{
-  e.preventDefault();
-  const qty=+ajQty.value, delta = ajTipo.value==='in'?qty:-qty;
-  if(p.stock+delta<0){showToast('El ajuste dejaría el stock en negativo');return}
-  p.stock+=delta; save(); closeModal('modal'); render();
-  showToast('Inventario ajustado ('+ajMotivo.value+')');
+ document.getElementById('adjustForm').onsubmit = async e => {
+    e.preventDefault();
+    const qty = +ajQty.value, delta = ajTipo.value === 'in' ? qty : -qty;
+    if(p.stock+delta<0){showToast('El ajuste dejaría el stock en negativo');return}
+    await supabase.from('products').update({ stock: p.stock+delta }).eq('id', p.id);
+    closeModal('modal'); await loadStateFromSupabase(); showToast('Inventario ajustado ('+ajMotivo.value+')');
  }
 }
+
 function debtItems(type){
  const list=[];
  if(type==='client'){
@@ -710,13 +679,13 @@ function partyMatch(type,name){
  if(!q)return [];
  return debtItems(type).filter(d=>normalizeStr(d.party).includes(q) || q.includes(normalizeStr(d.party)));
 }
+
 function paymentForm(type){
  const meta=type==='client'
-  ? {title:'Registrar abono de cliente',party:'Cliente',placeholder:'Ej. Tienda Don Jorge',amount:'Monto del abono',button:'Registrar abono',paymentClass:'ok'}
+  ? {title:'Registrar abono de cliente',party:'Cliente',placeholder:'Ej. Tienda Don Jorge',amount:'Monto del abono',button:'Registrar abono'}
   : type==='supplier'
-  ? {title:'Registrar pago a proveedor',party:'Proveedor',placeholder:'Ej. Distribuidora XYZ',amount:'Monto del pago',button:'Registrar pago',paymentClass:'warn'}
-  : {title:'Registrar pago de deuda de gasto',party:'Descripción del gasto',placeholder:'Ej. Arriendo de agosto',amount:'Monto del pago',button:'Registrar pago',paymentClass:'warn'};
- const debts=debtItems(type);
+  ? {title:'Registrar pago a proveedor',party:'Proveedor',placeholder:'Ej. Distribuidora XYZ',amount:'Monto del pago',button:'Registrar pago'}
+  : {title:'Registrar pago de deuda de gasto',party:'Descripción del gasto',placeholder:'Ej. Arriendo de agosto',amount:'Monto del pago',button:'Registrar pago'};
  return `<form id="debtPaymentForm" class="form-grid">
   <div class="field full"><label>${meta.party}</label><input id="debtParty" placeholder="${meta.placeholder}" required></div>
   <div class="field full"><label>Deuda a pagar</label><select id="debtId" required><option value="">Selecciona una deuda pendiente</option>${debtOptions(type)}</select></div>
@@ -728,15 +697,14 @@ function paymentForm(type){
   <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">${meta.button}</button></div>
  </form>`;
 }
+
 function setupDebtPaymentForm(type){
- const form=document.getElementById('debtPaymentForm');
- const idEl=document.getElementById('debtId'), amountEl=document.getElementById('debtAmount');
+ const form=document.getElementById('debtPaymentForm'), idEl=document.getElementById('debtId'), amountEl=document.getElementById('debtAmount');
  const partyEl=document.getElementById('debtParty'), info=document.getElementById('debtInfo');
  function refresh(){
   const d=getDebt(type,idEl.value);
   if(!d){info.innerHTML=''; return}
-  partyEl.value=d.party;
-  amountEl.max=d.remaining; amountEl.placeholder='Máximo '+d.remaining; amountEl.value=Math.min(Number(amountEl.value)||d.remaining,d.remaining);
+  partyEl.value=d.party; amountEl.max=d.remaining; amountEl.placeholder='Máximo '+d.remaining; amountEl.value=Math.min(Number(amountEl.value)||d.remaining,d.remaining);
   info.innerHTML=`<div class="debt-card selected"><div class="debt-row"><b>${escapeHtml(d.party)}</b><span class="badge warn">${money(d.remaining)} pendiente</span></div><div class="muted" style="margin-top:6px">${d.label} del ${d.date} · Total ${money(d.total)} · Pagado ${money(d.paid)}</div></div>`;
  }
  idEl.onchange=refresh;
@@ -744,19 +712,24 @@ function setupDebtPaymentForm(type){
   const matches=partyMatch(type,partyEl.value);
   if(matches.length===1){idEl.value=matches[0].id;refresh();}
  });
- form.onsubmit=e=>{
+ form.onsubmit = async e => {
   e.preventDefault();
-  const d=getDebt(type,idEl.value), amount=Number(amountEl.value);
-  if(!d)return showToast('Selecciona una deuda pendiente');
-  if(amount<=0)return showToast('Ingresa un valor válido');
-  if(amount>d.remaining)return showToast('El pago no puede superar la deuda pendiente');
-  const common={id:'x'+Date.now(),date:debtDate.value,amount,payment:debtPayment.value,note:debtNote.value.trim(),debtId:d.id};
-  if(type==='client')state.collections.unshift({...common,client:d.party,id:'c'+Date.now()});
-  if(type==='supplier')state.supplierPayments.unshift({...common,supplier:d.party,id:'sp'+Date.now()});
-  if(type==='expense')state.expensePayments.unshift({...common,description:d.party,id:'ep'+Date.now()});
-  save();closeModal('modal');render();showToast('Pago aplicado a la deuda seleccionada');
+  const d = getDebt(type,idEl.value), amount = Number(amountEl.value);
+  if(!d) return showToast('Selecciona una deuda pendiente');
+  if(amount<=0) return showToast('Ingresa un valor válido');
+  if(amount>d.remaining) return showToast('El pago no puede superar la deuda pendiente');
+  
+  const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
+  const common = { id, date: debtDate.value, amount, payment: debtPayment.value, note: debtNote.value.trim(), debt_id: d.id };
+  
+  if(type==='client') await supabase.from('collections').insert([{...common, client: d.party }]);
+  if(type==='supplier') await supabase.from('supplier_payments').insert([{...common, supplier: d.party }]);
+  if(type==='expense') await supabase.from('expense_payments').insert([{...common, description: d.party }]);
+  
+  closeModal('modal'); await loadStateFromSupabase(); showToast('Pago aplicado a la deuda');
  };
 }
+
 function openDebtPayment(type){
  const titles={client:'Registrar abono de cliente',supplier:'Registrar pago a proveedor',expense:'Registrar pago de deuda de gasto'};
  document.getElementById('modalTitle').textContent=titles[type];
@@ -767,30 +740,55 @@ function newCollection(){openDebtPayment('client')}
 function newSupplierPayment(){openDebtPayment('supplier')}
 function newExpensePayment(){openDebtPayment('expense')}
 
-
-document.addEventListener('submit',e=>{
- if(e.target.id==='opForm'){
+document.addEventListener('submit', async e => {
+ if(e.target.id === 'opForm') {
   e.preventDefault();
-  const isSale=document.getElementById('modalTitle').textContent.includes('venta');
-  const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price,party=fParty.value.trim();
-  if(isSale && qty>p.stock){showToast('Stock insuficiente');return}
-  if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value,client:party||'Cliente mostrador'});p.stock-=qty}
-  else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value,supplier:party||'Proveedor general'});p.stock+=qty}
-  save();closeModal('modal');render();showToast(isSale?'Venta registrada':'Compra registrada')
+  const isSale = document.getElementById('modalTitle').textContent.includes('venta');
+  const pid = fProduct.value, qty = +fQty.value, price = +fPrice.value, p = product(pid), total = qty*price, party = fParty.value.trim();
+  
+  if(isSale && qty > p.stock){ showToast('Stock insuficiente'); return; }
+  
+  const id = (isSale ? 's' : 'p') + Date.now();
+  const newStock = isSale ? p.stock - qty : p.stock + qty;
+  
+  if(isSale){
+    await supabase.from('sales').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, client: party||'Cliente mostrador' }]);
+  } else {
+    await supabase.from('purchases').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, supplier: party||'Proveedor general' }]);
+  }
+  
+  await supabase.from('products').update({ stock: newStock }).eq('id', pid);
+  closeModal('modal'); await loadStateFromSupabase(); showToast(isSale ? 'Venta registrada' : 'Compra registrada');
  }
 });
 
-function del(type,id){
- if(!confirm('¿Eliminar este registro?'))return;
- if(type==='sale'){const x=state.sales.find(v=>v.id===id);if(x)product(x.productId).stock+=x.qty;state.sales=state.sales.filter(v=>v.id!==id)}
- if(type==='purchase'){const x=state.purchases.find(v=>v.id===id);if(x)product(x.productId).stock-=x.qty;state.purchases=state.purchases.filter(v=>v.id!==id)}
- if(type==='expense')state.expenses=state.expenses.filter(v=>v.id!==id);
- if(type==='collection')state.collections=state.collections.filter(v=>v.id!==id);
- if(type==='supplierPayment')state.supplierPayments=state.supplierPayments.filter(v=>v.id!==id);
- if(type==='expensePayment')state.expensePayments=state.expensePayments.filter(v=>v.id!==id);
- save();render();showToast('Registro eliminado')
+async function del(type, id){
+ if(!confirm('¿Eliminar este registro?')) return;
+ if(type==='sale'){
+    const x=state.sales.find(v=>v.id===id);
+    if(x){
+        const p = product(x.productId);
+        await supabase.from('products').update({stock: p.stock+x.qty}).eq('id', x.productId);
+    }
+    await supabase.from('sales').delete().eq('id',id);
+ }
+ else if(type==='purchase'){
+    const x=state.purchases.find(v=>v.id===id);
+    if(x){
+        const p = product(x.productId);
+        await supabase.from('products').update({stock: p.stock-x.qty}).eq('id', x.productId);
+    }
+    await supabase.from('purchases').delete().eq('id',id);
+ }
+ else if(type==='expense') await supabase.from('expenses').delete().eq('id',id);
+ else if(type==='collection') await supabase.from('collections').delete().eq('id',id);
+ else if(type==='supplierPayment') await supabase.from('supplier_payments').delete().eq('id',id);
+ else if(type==='expensePayment') await supabase.from('expense_payments').delete().eq('id',id);
+ 
+ await loadStateFromSupabase(); showToast('Registro eliminado');
 }
 
+// NOTIFICACIONES
 function getNotifications(){
  const items=[];
  const add=(id,icon,title,text,section,cls='warn')=>items.push({id,icon,title,text,section,cls});
@@ -803,8 +801,8 @@ function getNotifications(){
 }
 function daysSince(dateStr){const d=new Date(dateStr+'T00:00:00'),t=new Date(today+'T00:00:00');return Math.max(0,Math.floor((t-d)/86400000))}
 let notificationSeen=[];
-function loadNotificationSeen(){try{notificationSeen=JSON.parse(localStorage.getItem(KEY+'_notifications'))||[]}catch(e){notificationSeen=[]}}
-function markNotificationsSeen(){notificationSeen=getNotifications().map(n=>n.id);localStorage.setItem(KEY+'_notifications',JSON.stringify(notificationSeen));renderNotifications();showToast('Notificaciones marcadas como leídas')}
+function loadNotificationSeen(){try{notificationSeen=JSON.parse(localStorage.getItem('cv_noti_v2'))||[]}catch(e){notificationSeen=[]}}
+function markNotificationsSeen(){notificationSeen=getNotifications().map(n=>n.id);localStorage.setItem('cv_noti_v2',JSON.stringify(notificationSeen));renderNotifications();showToast('Notificaciones marcadas como leídas')}
 function renderNotifications(){
  const list=document.getElementById('notificationList'), badge=document.getElementById('notificationBadge'); if(!list||!badge)return;
  const all=getNotifications(), unread=all.filter(n=>!notificationSeen.includes(n.id));
@@ -812,7 +810,7 @@ function renderNotifications(){
  list.innerHTML=all.length?all.map(n=>`<button class="notification-item ${n.cls}" onclick="openNotification('${n.id}','${n.section}')"><span class="ni-icon">${n.icon}</span><span><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.text)}</span></span></button>`).join(''):`<div class="notification-empty">🎉 No tienes notificaciones pendientes.</div>`;
 }
 function openNotification(id,section){
- if(!notificationSeen.includes(id)){notificationSeen.push(id);localStorage.setItem(KEY+'_notifications',JSON.stringify(notificationSeen))}
+ if(!notificationSeen.includes(id)){notificationSeen.push(id);localStorage.setItem('cv_noti_v2',JSON.stringify(notificationSeen))}
  document.getElementById('notificationPanel')?.classList.remove('open'); go(section);
 }
 const notificationBtn=document.getElementById('notificationBtn');
@@ -820,15 +818,11 @@ if(notificationBtn)notificationBtn.addEventListener('click',e=>{e.stopPropagatio
 document.addEventListener('click',e=>{if(!e.target.closest('#notificationArea'))document.getElementById('notificationPanel')?.classList.remove('open')});
 loadNotificationSeen();
 
-// --- Variables globales para guardar las instancias de gráficas ---
-let chartFlujoInst = null;
-let chartGastosInst = null;
-let chartTopProdInst = null;
+let chartFlujoInst = null, chartGastosInst = null, chartTopProdInst = null;
 
 function render(){
- // ---- Totales globales (histórico, no dependen del periodo) ----
  const salesTotal=sum(state.sales,'total'), expTotal=sum(state.expenses,'total');
- const cogs=state.sales.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), profit=salesTotal-cogs-expTotal;
+ const cogs=state.sales.reduce((a,s)=>a+s.qty*(product(s.productId)?.cost||0),0), profit=salesTotal-cogs-expTotal;
  kpiSales.textContent=money(salesTotal);kpiCosts.textContent=money(cogs);kpiExpenses.textContent=money(expTotal);kpiProfit.textContent=money(profit);
 
  const totalReceivable=sum(state.sales.filter(x=>x.type==='Crédito'),'total')-sum(state.collections,'amount');
@@ -840,100 +834,54 @@ function render(){
  rCashHistTotal.textContent=money(histCashIn-histCashOut);
  rReceivable.textContent=money(Math.max(0,totalReceivable));rPayable.textContent=money(Math.max(0,totalPayable));rExpDebt.textContent=money(Math.max(0,totalExpDebt));
 
- // ---- Alertas de inventario: bajo stock y próximos a vencer ----
  const lowStockItems=state.products.filter(p=>p.stock<=(p.minStock||10));
  const expiringItems=state.products.filter(p=>p.expiry && daysUntil(p.expiry)!==null && daysUntil(p.expiry)<=15);
  let alertsHtml='';
- if(lowStockItems.length){
-  alertsHtml+=`<div class="alert-banner danger"><div>⚠️<b>Bajo stock</b>${lowStockItems.length} producto(s) por debajo del mínimo configurado.<div class="chips">${lowStockItems.map(p=>`<span class="chip">${p.name}: ${p.stock} unid.</span>`).join('')}</div></div></div>`;
- }
- if(expiringItems.length){
-  alertsHtml+=`<div class="alert-banner warn"><div>⏳<b>Próximos a vencer</b>${expiringItems.length} producto(s) vencen en 15 días o menos (o ya vencieron).<div class="chips">${expiringItems.map(p=>{const d=daysUntil(p.expiry);return `<span class="chip">${p.name}: ${d<0?'vencido hace '+Math.abs(d)+'d':d+'d'}</span>`}).join('')}</div></div></div>`;
- }
- dashAlerts.innerHTML=alertsHtml;
- inventoryAlerts.innerHTML=alertsHtml||`<div class="empty" style="margin-bottom:16px">Sin alertas de inventario por ahora.</div>`;
+ if(lowStockItems.length) alertsHtml+=`<div class="alert-banner danger"><div>⚠️<b>Bajo stock</b>${lowStockItems.length} producto(s) por debajo del mínimo configurado.<div class="chips">${lowStockItems.map(p=>`<span class="chip">${p.name}: ${p.stock} unid.</span>`).join('')}</div></div></div>`;
+ if(expiringItems.length) alertsHtml+=`<div class="alert-banner warn"><div>⏳<b>Próximos a vencer</b>${expiringItems.length} producto(s) vencen en 15 días o menos (o ya vencieron).<div class="chips">${expiringItems.map(p=>{const d=daysUntil(p.expiry);return `<span class="chip">${p.name}: ${d<0?'vencido hace '+Math.abs(d)+'d':d+'d'}</span>`}).join('')}</div></div></div>`;
+ dashAlerts.innerHTML=alertsHtml; inventoryAlerts.innerHTML=alertsHtml||`<div class="empty" style="margin-bottom:16px">Sin alertas de inventario por ahora.</div>`;
 
  dashInventory.innerHTML=state.products.slice(0,5).map(p=>`<div class="list-item"><div><b>${p.name}</b></div><span class="badge ${p.stock<=(p.minStock||10)?'danger':p.stock<=(p.minStock||10)*2?'warn':'ok'}">${p.stock} unid.</span></div>`).join('');
 
- // ---- Ingresos (con filtro de periodo) ----
- const perIng=periodState.ingresos;
- const salesP=state.sales.filter(s=>inPeriod(s.date,perIng));
- const collectionsP=state.collections.filter(c=>inPeriod(c.date,perIng));
- ingPeriodTotal.textContent=money(sum(salesP,'total'));
- ingPeriodAbonos.textContent=money(sum(collectionsP,'amount'));
- ingCartera.textContent=money(Math.max(0,totalReceivable));
- 
+ const perIng=periodState.ingresos, salesP=state.sales.filter(s=>inPeriod(s.date,perIng)), collectionsP=state.collections.filter(c=>inPeriod(c.date,perIng));
+ ingPeriodTotal.textContent=money(sum(salesP,'total')); ingPeriodAbonos.textContent=money(sum(collectionsP,'amount')); ingCartera.textContent=money(Math.max(0,totalReceivable));
  salesBody.innerHTML = salesP.map(s => {
     let estadoHtml = `<span class="badge ok">Contado</span>`;
     if (s.type === 'Crédito') {
         const pagado = sum(state.collections.filter(c => c.debtId === s.id), 'amount');
         const restante = Math.max(0, s.total - pagado);
-        if (restante === 0) {
-            estadoHtml = `<span class="badge ok">Pagado</span>`;
-        } else if (restante < s.total) {
-            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
-        } else {
-            estadoHtml = `<span class="badge warn">Crédito</span>`;
-        }
+        estadoHtml = restante === 0 ? `<span class="badge ok">Pagado</span>` : restante < s.total ? `<span class="badge warn">Parcial (${money(restante)})</span>` : `<span class="badge warn">Crédito</span>`;
     }
-    return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`;
+    return `<tr><td>${s.date}</td><td><b>${(product(s.productId)||{}).name||'—'}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`;
  }).join('') || `<tr><td colspan="8" class="empty empty-table">Aún no hay ventas en este periodo</td></tr>`;
- 
  collectionsBody.innerHTML=collectionsP.map(c=>`<tr><td>${c.date}</td><td><b>${c.client}</b></td><td>${money(c.amount)}</td><td>${c.payment}</td><td>${c.note||'—'}</td><td><button class="btn btn-danger" onclick="del('collection','${c.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay abonos en este periodo</td></tr>`;
 
- // ---- Compras (con filtro de periodo) ----
- const perCom=periodState.compras;
- const purchasesP=state.purchases.filter(s=>inPeriod(s.date,perCom));
- const supplierPaymentsP=state.supplierPayments.filter(sp=>inPeriod(sp.date,perCom));
- comPeriodTotal.textContent=money(sum(purchasesP,'total'));
- comPeriodPagos.textContent=money(sum(supplierPaymentsP,'amount'));
- comPorPagar.textContent=money(Math.max(0,totalPayable));
- 
+ const perCom=periodState.compras, purchasesP=state.purchases.filter(s=>inPeriod(s.date,perCom)), supplierPaymentsP=state.supplierPayments.filter(sp=>inPeriod(sp.date,perCom));
+ comPeriodTotal.textContent=money(sum(purchasesP,'total')); comPeriodPagos.textContent=money(sum(supplierPaymentsP,'amount')); comPorPagar.textContent=money(Math.max(0,totalPayable));
  purchaseBody.innerHTML = purchasesP.map(s => {
     let estadoHtml = `<span class="badge ok">Contado</span>`;
     if (s.type === 'Crédito') {
         const pagado = sum(state.supplierPayments.filter(sp => sp.debtId === s.id), 'amount');
         const restante = Math.max(0, s.total - pagado);
-        if (restante === 0) {
-            estadoHtml = `<span class="badge ok">Pagado</span>`;
-        } else if (restante < s.total) {
-            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
-        } else {
-            estadoHtml = `<span class="badge warn">Crédito</span>`;
-        }
+        estadoHtml = restante === 0 ? `<span class="badge ok">Pagado</span>` : restante < s.total ? `<span class="badge warn">Parcial (${money(restante)})</span>` : `<span class="badge warn">Crédito</span>`;
     }
-    return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`;
+    return `<tr><td>${s.date}</td><td><b>${(product(s.productId)||{}).name||'—'}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`;
  }).join('') || `<tr><td colspan="8" class="empty empty-table">Aún no hay compras en este periodo</td></tr>`;
- 
  supplierPaymentsBody.innerHTML=supplierPaymentsP.map(sp=>`<tr><td>${sp.date}</td><td><b>${sp.supplier}</b></td><td>${money(sp.amount)}</td><td>${sp.payment}</td><td>${sp.note||'—'}</td><td><button class="btn btn-danger" onclick="del('supplierPayment','${sp.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
- // ---- Gastos (con filtro de periodo) ----
- const perGas=periodState.gastos;
- const expensesP=state.expenses.filter(x=>inPeriod(x.date,perGas));
- const expensePaymentsP=state.expensePayments.filter(ep=>inPeriod(ep.date,perGas));
- gasPeriodTotal.textContent=money(sum(expensesP,'total'));
- gasPeriodPagos.textContent=money(sum(expensePaymentsP,'amount'));
- gasPorPagar.textContent=money(Math.max(0,totalExpDebt));
- 
+ const perGas=periodState.gastos, expensesP=state.expenses.filter(x=>inPeriod(x.date,perGas)), expensePaymentsP=state.expensePayments.filter(ep=>inPeriod(ep.date,perGas));
+ gasPeriodTotal.textContent=money(sum(expensesP,'total')); gasPeriodPagos.textContent=money(sum(expensePaymentsP,'amount')); gasPorPagar.textContent=money(Math.max(0,totalExpDebt));
  expenseBody.innerHTML = expensesP.map(x => {
     let estadoHtml = `<span class="badge ok">Contado</span>`;
     if (x.type === 'Crédito') {
         const pagado = sum(state.expensePayments.filter(ep => ep.debtId === x.id), 'amount');
         const restante = Math.max(0, x.total - pagado);
-        if (restante === 0) {
-            estadoHtml = `<span class="badge ok">Pagado</span>`;
-        } else if (restante < x.total) {
-            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
-        } else {
-            estadoHtml = `<span class="badge warn">Crédito</span>`;
-        }
+        estadoHtml = restante === 0 ? `<span class="badge ok">Pagado</span>` : restante < x.total ? `<span class="badge warn">Parcial (${money(restante)})</span>` : `<span class="badge warn">Crédito</span>`;
     }
     return `<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`;
  }).join('') || `<tr><td colspan="6" class="empty empty-table">Aún no hay gastos en este periodo</td></tr>`;
- 
  expensePaymentsBody.innerHTML=expensePaymentsP.map(ep=>`<tr><td>${ep.date}</td><td><b>${ep.description}</b></td><td>${money(ep.amount)}</td><td>${ep.payment}</td><td>${ep.note||'—'}</td><td><button class="btn btn-danger" onclick="del('expensePayment','${ep.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
- // ---- Inventario ----
  inventoryCards.innerHTML=state.products.map(p=>{
   const d=p.expiry?daysUntil(p.expiry):null;
   const expiryLabel=p.expiry?(d<0?`Vencido hace ${Math.abs(d)}d`:`Vence en ${d}d`):'Sin fecha registrada';
@@ -945,635 +893,168 @@ function render(){
    </div>`;
  }).join('');
 
- // ---- Reportes (con filtro de periodo propio) ----
- const perRep=periodState.reportes;
- const salesR=state.sales.filter(s=>inPeriod(s.date,perRep));
- const purchasesR=state.purchases.filter(s=>inPeriod(s.date,perRep));
- const expensesR=state.expenses.filter(x=>inPeriod(x.date,perRep));
- const collectionsR=state.collections.filter(c=>inPeriod(c.date,perRep));
- const supplierPaymentsR=state.supplierPayments.filter(sp=>inPeriod(sp.date,perRep));
- const expensePaymentsR=state.expensePayments.filter(ep=>inPeriod(ep.date,perRep));
- const salesTotalR=sum(salesR,'total'), cogsR=salesR.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), expTotalR=sum(expensesR,'total');
+ const perRep=periodState.reportes, salesR=state.sales.filter(s=>inPeriod(s.date,perRep)), purchasesR=state.purchases.filter(s=>inPeriod(s.date,perRep)), expensesR=state.expenses.filter(x=>inPeriod(x.date,perRep)), collectionsR=state.collections.filter(c=>inPeriod(c.date,perRep)), supplierPaymentsR=state.supplierPayments.filter(sp=>inPeriod(sp.date,perRep)), expensePaymentsR=state.expensePayments.filter(ep=>inPeriod(ep.date,perRep));
+ const salesTotalR=sum(salesR,'total'), cogsR=salesR.reduce((a,s)=>a+s.qty*(product(s.productId)?.cost||0),0), expTotalR=sum(expensesR,'total');
  const cashInR=sum(salesR.filter(x=>x.payment!=='Crédito'),'total')+sum(collectionsR,'amount');
  const cashOutR=sum(purchasesR.filter(x=>x.payment!=='Crédito'),'total')+sum(expensesR.filter(x=>x.payment!=='Crédito'),'total')+sum(supplierPaymentsR,'amount')+sum(expensePaymentsR,'amount');
  rCashIn.textContent=money(cashInR);rCashOut.textContent=money(cashOutR);rCashTotal.textContent=money(cashInR-cashOutR);
  rIncome.textContent=money(salesTotalR);rCOGS.textContent=money(cogsR);rExpenses.textContent=money(expTotalR);rProfit.textContent=money(salesTotalR-cogsR-expTotalR);
  renderNotifications();
 
- // ---- Preparar Datos para Gráficas ----
- 
- // 1. Valor del inventario (Dinero en mercancía)
  let invCost = 0, invSale = 0;
- state.products.forEach(p => {
-    if (p.stock > 0) {
-        invCost += (p.stock * p.cost);
-        invSale += (p.stock * p.sale);
-    }
- });
- document.getElementById('rInvCost').textContent = money(invCost);
- document.getElementById('rInvSale').textContent = money(invSale);
- document.getElementById('rInvProfit').textContent = money(invSale - invCost);
+ state.products.forEach(p => { if (p.stock > 0) { invCost += (p.stock * p.cost); invSale += (p.stock * p.sale); } });
+ document.getElementById('rInvCost').textContent = money(invCost); document.getElementById('rInvSale').textContent = money(invSale); document.getElementById('rInvProfit').textContent = money(invSale - invCost);
 
- // Solo dibujamos si Chart.js cargó correctamente
  if (typeof Chart !== 'undefined') {
-    // Destruir instancias viejas para que no se superpongan visualmente al actualizar
-    if(chartFlujoInst) chartFlujoInst.destroy();
-    if(chartGastosInst) chartGastosInst.destroy();
-    if(chartTopProdInst) chartTopProdInst.destroy();
+    if(chartFlujoInst) chartFlujoInst.destroy(); if(chartGastosInst) chartGastosInst.destroy(); if(chartTopProdInst) chartTopProdInst.destroy();
 
-    // 2. Gráfica de Ingresos vs Compras vs Gastos
-    const ctxFlujo = document.getElementById('chartFlujo').getContext('2d');
-    chartFlujoInst = new Chart(ctxFlujo, {
+    chartFlujoInst = new Chart(document.getElementById('chartFlujo').getContext('2d'), {
         type: 'bar',
-        data: {
-            labels: ['Ventas', 'Compras', 'Gastos'],
-            datasets: [{
-                label: 'Monto COP',
-                data: [salesTotalR, sum(purchasesR, 'total'), expTotalR],
-                backgroundColor: ['#059669', '#d3a537', '#dc2626'],
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
-        }
+        data: { labels: ['Ventas', 'Compras', 'Gastos'], datasets: [{ label: 'Monto COP', data: [salesTotalR, sum(purchasesR, 'total'), expTotalR], backgroundColor: ['#059669', '#d3a537', '#dc2626'], borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    // 3. Gráfica de Gastos por Categoría (Anillo)
-    const gastosMap = {};
-    expensesR.forEach(ex => {
-        gastosMap[ex.description] = (gastosMap[ex.description] || 0) + ex.total;
-    });
-    const expLabels = Object.keys(gastosMap);
-    const expData = Object.values(gastosMap);
-    const ctxGastos = document.getElementById('chartGastos').getContext('2d');
-    
-    chartGastosInst = new Chart(ctxGastos, {
+    const gastosMap = {}; expensesR.forEach(ex => { gastosMap[ex.description] = (gastosMap[ex.description] || 0) + ex.total; });
+    const expLabels = Object.keys(gastosMap), expData = Object.values(gastosMap);
+    chartGastosInst = new Chart(document.getElementById('chartGastos').getContext('2d'), {
         type: 'doughnut',
-        data: {
-            labels: expLabels.length ? expLabels : ['Sin gastos'],
-            datasets: [{
-                data: expLabels.length ? expData : [1],
-                backgroundColor: expLabels.length 
-                    ? ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#22d3ee', '#818cf8', '#c084fc'] 
-                    : ['#e5e7eb'],
-                borderWidth: 0
-            }]
-        },
+        data: { labels: expLabels.length ? expLabels : ['Sin gastos'], datasets: [{ data: expLabels.length ? expData : [1], backgroundColor: expLabels.length ? ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#22d3ee', '#818cf8', '#c084fc'] : ['#e5e7eb'], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false }
     });
 
-    // 4. Gráfica Top 5 Productos más vendidos
-    const prodSalesMap = {};
-    salesR.forEach(s => {
-        prodSalesMap[s.productId] = (prodSalesMap[s.productId] || 0) + s.qty;
-    });
-    const topProds = Object.entries(prodSalesMap)
-        .sort((a, b) => b[1] - a[1]) // Mayor a menor
-        .slice(0, 5) // Tomar los 5 primeros
-        .map(([id, qty]) => ({ name: product(id).name, qty }));
-
-    const ctxTop = document.getElementById('chartTopProductos').getContext('2d');
-    chartTopProdInst = new Chart(ctxTop, {
+    const prodSalesMap = {}; salesR.forEach(s => { prodSalesMap[s.productId] = (prodSalesMap[s.productId] || 0) + s.qty; });
+    const topProds = Object.entries(prodSalesMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, qty]) => ({ name: (product(id)||{}).name||'Desconocido', qty }));
+    chartTopProdInst = new Chart(document.getElementById('chartTopProductos').getContext('2d'), {
         type: 'bar',
-        data: {
-            labels: topProds.length ? topProds.map(p => p.name.substring(0, 15) + '...') : ['Sin ventas'],
-            datasets: [{
-                label: 'Unidades',
-                data: topProds.length ? topProds.map(p => p.qty) : [0],
-                backgroundColor: '#113f2e',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y', // Convertir la gráfica a barras horizontales
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
-        }
+        data: { labels: topProds.length ? topProds.map(p => p.name.substring(0, 15) + '...') : ['Sin ventas'], datasets: [{ label: 'Unidades', data: topProds.length ? topProds.map(p => p.qty) : [0], backgroundColor: '#113f2e', borderRadius: 4 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
  }
 }
-render();
 
-// ---------- VOZ: ESCUCHA CONTINUA HASTA QUE TERMINAS LA FRASE, DESPUÉS INTERPRETA ----------
+// VOZ (Mismas reglas locales pero guardando asíncronamente en Supabase)
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null, listening = false;
-let finalTranscript = '';
-let interimBuffer = '';
-let voiceCancelled = false;
-const MAX_LISTEN_MS = 60000; // tope de seguridad para que nunca quede escuchando "para siempre"
-let maxListenTimer = null;
+let recognition = null, listening = false, finalTranscript = '', interimBuffer = '', voiceCancelled = false;
+const MAX_LISTEN_MS = 60000; let maxListenTimer = null;
 
-function escapeHtml(str){
- return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function updateTranscriptView(){
- const box = document.getElementById('voiceTranscript');
- const combined = (finalTranscript + interimBuffer).trim();
- if(combined){
-  box.innerHTML = `<span style="color:#111827">${escapeHtml(finalTranscript)}</span><span style="color:#9ca3af">${escapeHtml(interimBuffer)}</span>`;
- } else {
-  box.textContent = 'Escuchando... di tu operación';
- }
-}
-
-function setMicBar(pct, pulse){
- const bar = document.getElementById('micLevelBar');
- if(!bar) return;
- bar.style.width = pct + '%';
- bar.classList.toggle('bar-pulse', !!pulse);
-}
+function escapeHtml(str){ return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function updateTranscriptView(){ const box = document.getElementById('voiceTranscript'); const combined = (finalTranscript + interimBuffer).trim(); if(combined){ box.innerHTML = `<span style="color:#111827">${escapeHtml(finalTranscript)}</span><span style="color:#9ca3af">${escapeHtml(interimBuffer)}</span>`; } else { box.textContent = 'Escuchando... di tu operación'; } }
+function setMicBar(pct, pulse){ const bar = document.getElementById('micLevelBar'); if(!bar) return; bar.style.width = pct + '%'; bar.classList.toggle('bar-pulse', !!pulse); }
 
 if(SpeechRecognition){
- recognition = new SpeechRecognition();
- recognition.lang = 'es-CO';
- recognition.interimResults = true;
- recognition.continuous = true;
- recognition.maxAlternatives = 1;
-
- recognition.onstart = () => {
-  listening = true;
-  voiceCancelled = false;
-  finalTranscript = '';
-  interimBuffer = '';
-  document.getElementById('fabMic').classList.add('listening');
-  document.getElementById('voiceLiveDot').style.display = 'none';
-  document.getElementById('voiceStatusTitle').textContent = '🔌 Activando micrófono...';
-  document.getElementById('voiceTranscript').textContent = 'Esperando permiso del navegador...';
-  document.getElementById('voicePreview').hidden = true;
-  openModal('voiceModal');
-  setMicBar(0, false);
-  clearTimeout(maxListenTimer);
-  maxListenTimer = setTimeout(() => {
-   if(listening){ showToast('⏱️ Tiempo máximo alcanzado, procesando lo dicho'); recognition.stop(); }
-  }, MAX_LISTEN_MS);
- };
-
- recognition.onaudiostart = () => {
-  document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo. Habla y toca Confirmar al terminar';
-  document.getElementById('voiceTranscript').textContent = 'Habla ahora, de corrido...';
-  setMicBar(10, false);
- };
- recognition.onsoundstart = () => {
-  document.getElementById('voiceStatusTitle').textContent = '👂 Detecté sonido...';
-  setMicBar(40, false);
- };
- recognition.onspeechstart = () => {
-  document.getElementById('voiceStatusTitle').textContent = '🗣️ Escuchando tu voz...';
-  document.getElementById('voiceLiveDot').style.display = 'flex';
-  setMicBar(90, true);
- };
- recognition.onspeechend = () => {
-  document.getElementById('voiceLiveDot').style.display = 'none';
-  document.getElementById('voiceStatusTitle').textContent = '🎙️ Toca "Confirmar" cuando termines';
-  setMicBar(15, false);
- };
-
- recognition.onresult = e => {
-  let interim = '';
-  for(let i = 0; i < e.results.length; i++){
-   const result = e.results[i];
-   const transcript = result[0].transcript.trim();
-   if(!transcript) continue;
-   if(result.isFinal){
-    const normNew = normalizeStr(transcript);
-    const normCurrent = normalizeStr(finalTranscript.trim());
-    if(!normCurrent || normNew.includes(normCurrent)){
-     finalTranscript = transcript;
-    } else if(normCurrent.includes(normNew)){
-    } else {
-     finalTranscript = finalTranscript.trim() + ' ' + transcript;
-    }
-   } else {
-    interim += transcript;
-   }
-  }
-  interimBuffer = interim;
-  updateTranscriptView();
- };
-
- recognition.onnomatch = () => {
-  console.warn('SpeechRecognition: onnomatch — recibió audio pero no reconoció palabras');
- };
-
- recognition.onerror = e => {
-  console.warn('SpeechRecognition error:', e.error);
-  if(e.error === 'no-speech' || e.error === 'aborted'){
-   return;
-  }
-  listening = false;
-  clearTimeout(maxListenTimer);
-  setMicBar(0, false);
-  document.getElementById('fabMic').classList.remove('listening');
-  document.getElementById('voiceLiveDot').style.display = 'none';
-  let title = '❌ No se pudo reconocer tu voz';
-  let msg = 'Inténtalo de nuevo con el botón de abajo.';
-  if(e.error === 'not-allowed' || e.error === 'permission-denied'){
-   title = '🚫 Permiso de micrófono bloqueado';
-   msg = 'Entra a la configuración del sitio (icono de candado en la barra de direcciones) y permite el acceso al micrófono.';
-  } else if(e.error === 'audio-capture'){
-   title = '🎤 No se detectó ningún micrófono';
-   msg = 'Verifica que tu dispositivo tenga un micrófono disponible y que ninguna otra app lo esté usando.';
-  } else if(e.error === 'network'){
-   title = '📶 Error de conexión';
-   msg = 'El reconocimiento de voz necesita internet. Verifica tu conexión y vuelve a intentar.';
-  } else if(e.error === 'service-not-allowed'){
-   title = '⚠️ Servicio de voz no disponible';
-   msg = 'Este navegador bloqueó el servicio de voz aquí. Asegúrate de abrir la página con https:// (no como archivo local).';
-  } else if(e.error === 'language-not-supported'){
-   title = '⚠️ Idioma no soportado';
-   msg = 'Tu navegador no soporta español de Colombia para voz. Prueba con Chrome actualizado.';
-  }
-  document.getElementById('voiceStatusTitle').textContent = title;
-  document.getElementById('voiceTranscript').textContent = msg;
- };
-
- recognition.onend = () => {
-  listening = false;
-  clearTimeout(maxListenTimer);
-  setMicBar(0, false);
-  document.getElementById('fabMic').classList.remove('listening');
-  document.getElementById('voiceLiveDot').style.display = 'none';
-  if(voiceCancelled){ voiceCancelled = false; return; }
-  const text = (finalTranscript + interimBuffer).trim();
-  if(text){
-   document.getElementById('voiceTranscript').textContent = text;
-   document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...';
-   processVoiceCommand(text);
-  } else {
-   document.getElementById('voiceStatusTitle').textContent = '🤔 No escuché nada';
-   document.getElementById('voiceTranscript').textContent = 'Toca "Volver a intentar" y habla cerca del micrófono.';
-  }
- };
-
- if(!window.isSecureContext){
-  console.warn('ContaVoz: esta página no está en un contexto seguro (https). El micrófono probablemente será bloqueado por el navegador.');
-  document.getElementById('fabMic').title = 'El micrófono requiere https:// — ábrelo con un servidor seguro';
-  setTimeout(() => showToast('⚠️ Abre esta página con https:// para poder usar el micrófono'), 800);
- }
+ recognition = new SpeechRecognition(); recognition.lang = 'es-CO'; recognition.interimResults = true; recognition.continuous = true; recognition.maxAlternatives = 1;
+ recognition.onstart = () => { listening = true; voiceCancelled = false; finalTranscript = ''; interimBuffer = ''; document.getElementById('fabMic').classList.add('listening'); document.getElementById('voiceLiveDot').style.display = 'none'; document.getElementById('voiceStatusTitle').textContent = '🔌 Activando micrófono...'; document.getElementById('voiceTranscript').textContent = 'Esperando permiso del navegador...'; document.getElementById('voicePreview').hidden = true; openModal('voiceModal'); setMicBar(0, false); clearTimeout(maxListenTimer); maxListenTimer = setTimeout(() => { if(listening){ showToast('⏱️ Tiempo máximo alcanzado'); recognition.stop(); } }, MAX_LISTEN_MS); };
+ recognition.onaudiostart = () => { document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo.'; document.getElementById('voiceTranscript').textContent = 'Habla ahora...'; setMicBar(10, false); };
+ recognition.onsoundstart = () => { document.getElementById('voiceStatusTitle').textContent = '👂 Detecté sonido...'; setMicBar(40, false); };
+ recognition.onspeechstart = () => { document.getElementById('voiceStatusTitle').textContent = '🗣️ Escuchando...'; document.getElementById('voiceLiveDot').style.display = 'flex'; setMicBar(90, true); };
+ recognition.onspeechend = () => { document.getElementById('voiceLiveDot').style.display = 'none'; document.getElementById('voiceStatusTitle').textContent = '🎙️ Toca "Confirmar" cuando termines'; setMicBar(15, false); };
+ recognition.onresult = e => { let interim = ''; for(let i = 0; i < e.results.length; i++){ const result = e.results[i], transcript = result[0].transcript.trim(); if(!transcript) continue; if(result.isFinal){ const normNew = normalizeStr(transcript), normCurrent = normalizeStr(finalTranscript.trim()); if(!normCurrent || normNew.includes(normCurrent)){ finalTranscript = transcript; } else if(!normCurrent.includes(normNew)){ finalTranscript = finalTranscript.trim() + ' ' + transcript; } } else { interim += transcript; } } interimBuffer = interim; updateTranscriptView(); };
+ recognition.onerror = e => { listening = false; clearTimeout(maxListenTimer); setMicBar(0, false); document.getElementById('fabMic').classList.remove('listening'); document.getElementById('voiceLiveDot').style.display = 'none'; document.getElementById('voiceStatusTitle').textContent = '❌ Error de voz'; document.getElementById('voiceTranscript').textContent = 'Error: ' + e.error; };
+ recognition.onend = () => { listening = false; clearTimeout(maxListenTimer); setMicBar(0, false); document.getElementById('fabMic').classList.remove('listening'); document.getElementById('voiceLiveDot').style.display = 'none'; if(voiceCancelled){ voiceCancelled = false; return; } const text = (finalTranscript + interimBuffer).trim(); if(text){ document.getElementById('voiceTranscript').textContent = text; document.getElementById('voiceStatusTitle').textContent = '✅ Procesando texto...'; processVoiceCommand(text); } };
+ document.getElementById('fabMic').onclick = () => { if(listening) stopVoice(); else recognition.start(); };
 } else {
- document.getElementById('fabMic').onclick = () => alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+ document.getElementById('fabMic').onclick = () => alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome.");
 }
 
+function stopVoice() { voiceCancelled = true; if(recognition && listening) recognition.stop(); else setMicBar(0, false); closeModal('voiceModal'); }
+function confirmVoice() { voiceCancelled = false; if(recognition && listening) recognition.stop(); else { const text = (finalTranscript + interimBuffer).trim(); if(text) processVoiceCommand(text); else showToast('No he escuchado nada'); } }
+function restartVoice() { document.getElementById('voicePreview').hidden = true; document.getElementById('voiceStatusTitle').textContent = '🎙️ Escuchando...'; document.getElementById('voiceTranscript').textContent = 'Habla ahora...'; if(recognition) { try { recognition.start(); } catch(err) {} } }
 
-
-if(recognition){
- document.getElementById('fabMic').onclick = () => {
-  if(listening) stopVoice(); else recognition.start();
- };
-}
-
-function stopVoice() {
- voiceCancelled = true;
- if(recognition && listening){
-  recognition.stop();
- } else {
-  setMicBar(0, false);
- }
- closeModal('voiceModal');
-}
-
-function confirmVoice() {
- voiceCancelled = false;
- if(recognition && listening){
-  recognition.stop();
- } else {
-  const text = (finalTranscript + interimBuffer).trim();
-  if(text) processVoiceCommand(text);
-  else showToast('No he escuchado nada todavía');
- }
-}
-
-function restartVoice() {
- document.getElementById('voicePreview').hidden = true;
- document.getElementById('voiceStatusTitle').textContent = '🎙️ Escuchando de nuevo...';
- document.getElementById('voiceTranscript').textContent = 'Habla ahora...';
- if(recognition) {
-  try { recognition.start(); } catch(err) { /* Ya activo */ }
- }
-}
-
-function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-
-const expenseCategories = [
- { name:'Seguridad Social', keys:['seguridad social','eps','pension','planilla'] },
- { name:'Nómina',           keys:['nomina','sueldo','salario','empleado','empleados','pago de personal'] },
- { name:'Arriendo',         keys:['arriendo','alquiler del local','alquiler'] },
- { name:'Vigilancia',       keys:['vigilancia','seguridad privada'] },
- { name:'Agua',             keys:['agua','acueducto'] },
- { name:'Luz',              keys:['luz','electricidad','energia'] },
- { name:'Internet',         keys:['internet','wifi'] },
- { name:'Útiles de Aseo',   keys:['aseo','limpieza','utiles de aseo'] },
- { name:'Transporte',       keys:['transporte','gasolina','domicilio','domicilios'] },
- { name:'Papelería',        keys:['papeleria','utiles de oficina'] },
- { name:'Mantenimiento',    keys:['mantenimiento','reparacion','reparaciones'] },
- { name:'Publicidad',       keys:['publicidad','marketing','pauta'] },
- { name:'Impuestos',        keys:['impuesto','impuestos','iva'] },
-];
+const expenseCategories = [{ name:'Seguridad Social', keys:['seguridad social','eps','pension'] }, { name:'Nómina', keys:['nomina','sueldo','salario'] }, { name:'Arriendo', keys:['arriendo','alquiler'] }, { name:'Vigilancia', keys:['vigilancia','seguridad'] }, { name:'Agua', keys:['agua','acueducto'] }, { name:'Luz', keys:['luz','energia'] }, { name:'Internet', keys:['internet','wifi'] }, { name:'Útiles de Aseo', keys:['aseo','limpieza'] }, { name:'Transporte', keys:['transporte','gasolina'] }];
 const expenseCategoryNames = expenseCategories.map(c => c.name);
+function findExpenseCategory(nText){ for(const cat of expenseCategories){ for(const key of cat.keys){ if(nText.includes(normalizeStr(key))) return cat.name; } } return null; }
+function fuzzyFindProduct(text){ const n = normalizeStr(text), keys = {'volcan': '1', 'finca': '2', 'mujeres': '3', 'origen': '4', 'narino': '4', 'colina': '5'}; for(let key in keys){ if(n.includes(key)) return product(keys[key]); } return null; }
 
-function findExpenseCategory(normalizedText){
- for(const cat of expenseCategories){
-  for(const key of cat.keys){
-   if(normalizedText.includes(normalizeStr(key))) return cat.name;
-  }
- }
- return null;
-}
-
-function fuzzyFindProduct(text){
- const n = normalizeStr(text);
- const keywords = {
-     'volcan': '1', 'finca': '2', 'mujeres': '3', 
-     'origen': '4', 'narino': '4', 'colina': '5'
- };
- for(let key in keywords){
-     if(n.includes(key)) return product(keywords[key]);
- }
- return null;
-}
-
-const numberWords = {
-    'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,
-    'diez':10,'once':11,'doce':12,'trece':13,'catorce':14,'quince':15,
-    'dieciseis':16,'diecisiete':17,'dieciocho':18,'diecinueve':19,
-    'veinte':20,'veintiuno':21,'veintiun':21,'veintidos':22,'veintitres':23,'veinticuatro':24,
-    'veinticinco':25,'veintiseis':26,'veintisiete':27,'veintiocho':28,'veintinueve':29,
-    'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,'setenta':70,'ochenta':80,'noventa':90,
-    'cien':100,'ciento':100,'doscientos':200,'trescientos':300,'cuatrocientos':400,'quinientos':500,
-    'seiscientos':600,'setecientos':700,'ochocientos':800,'novecientos':900
-};
-const numberScales = { 'mil':1000, 'millon':1000000, 'millones':1000000 };
-
-function wordsToNumber(text){
-    const words = text.split(/\s+/);
-    let total = 0, current = 0, found = false;
-    for(const w of words){
-        if(w in numberWords){
-            current += numberWords[w];
-            found = true;
-        } else if(w in numberScales){
-            total += (current || 1) * numberScales[w];
-            current = 0;
-            found = true;
-        }
-    }
-    total += current;
-    return found ? total : null;
-}
-
-function extractNumber(text, defaultVal = 0) {
-    // Normaliza frases como "8 millones 450 mil" => 8450000
-    const normalized = normalizeStr(String(text))
-      .replace(/pesos|cop|dolares/g,' ')
-      .replace(/[,]/g,'.');
-
-    // Primero intenta interpretar cantidades con escalas (millones / mil).
-    const scaleRegex = /(\d+(?:\.\d+)?)\s*(millones|millon|mil)\b/g;
-    let match, scaledTotal = 0, foundScale = false;
-    while((match = scaleRegex.exec(normalized)) !== null){
-      const value = Number(match[1]);
-      const scale = match[2].startsWith('millon') ? 1000000 : 1000;
-      scaledTotal += value * scale;
-      foundScale = true;
-    }
-    if(foundScale && scaledTotal > 0) return Math.round(scaledTotal);
-
-    // Cantidades escritas con separadores: 8.450.000, 8 450 000, 8450000.
-    const compactCandidates = normalized.match(/\d{1,3}(?:[.\s]\d{3})+(?!\d)|\d{4,}/g);
-    if(compactCandidates && compactCandidates.length){
-      const raw = compactCandidates[compactCandidates.length-1];
-      return Number(raw.replace(/[^\d]/g,''));
-    }
-
-    const nums = normalized.match(/\d+/g);
-    if(nums && nums.length) return Number(nums[nums.length-1]);
-
-    const wordVal = wordsToNumber(normalized);
-    return wordVal !== null ? wordVal : defaultVal;
-}
-// Extrae nombres NUEVOS directamente de la frase, sin necesidad de que existan previamente.
-// Ej.: "Venta de 10 unidades Café Volcán a Tienda Doña Lucía"
-//      "Compré 20 Café Volcán a Distribuidora La Esperanza"
-function cleanPartyName(value){
- return String(value||'')
-  .replace(/^(?:la|el)\s+/i,'')
-  .replace(/\s+(?:por|valor|total|de)\s+\$?[\d.,]+.*$/i,'')
-  .replace(/\s+(?:en|con)\s+(?:efectivo|nequi|transferencia|tarjeta|credito).*$/i,'')
-  .replace(/[.,;:]+$/,'').replace(/\s+/g,' ').trim();
-}
-function extractPartyName(text, kind){
- const t=String(text||'').trim();
- const markers = kind==='sale'
-  ? ['cliente','para','a nombre de',' a ']
-  : ['proveedor','a proveedor','comprado a','compre a','compré a',' a '];
- for(const marker of markers){
-   const escaped=marker.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').trim();
-   // " a " se usa como marcador final; exige al menos dos caracteres para evitar falsos positivos.
-   const re=new RegExp('(?:^|\\s)'+escaped+'\\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\\s]{1,}?)'+
-     '(?=\\s+(?:por|valor|total|en efectivo|en nequi|con nequi|efectivo|nequi|transferencia|tarjeta|credito|crédito)\\b|$)','i');
-   const m=t.match(re);
-   if(m && cleanPartyName(m[1]).length>=2) return cleanPartyName(m[1]);
- }
- return '';
-}
-function extractClientName(text){ return extractPartyName(text,'sale'); }
-function extractSupplierName(text){ return extractPartyName(text,'purchase'); }
+const numberWords = {'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'veinte':20,'treinta':30,'cuarenta':40,'cincuenta':50,'cien':100,'doscientos':200,'trescientos':300,'quinientos':500,'mil':1000};
+function extractNumber(text) { const norm = normalizeStr(String(text)).replace(/pesos|cop/g,' ').replace(/[,]/g,'.'); const nums = norm.match(/\d+/g); if(nums && nums.length) return Number(nums[nums.length-1]); return 0; }
 
 function processVoiceCommand(text){
- const n = normalizeStr(text);
- const voicePreview = document.getElementById('voicePreview');
- voicePreview.hidden = false;
-
+ const n = normalizeStr(text); const voicePreview = document.getElementById('voicePreview'); voicePreview.hidden = false;
  let kind = null;
- const mentionsProveedor = n.includes('proveedor');
- const mentionsDeudaGasto = (n.includes('deuda') || n.includes('abono')) && n.includes('gasto');
- if(mentionsProveedor && (n.includes('pago') || n.includes('pague') || n.includes('abono'))){ kind = 'supplier_payment'; }
- else if(mentionsDeudaGasto){ kind = 'expense_payment'; }
- else if(n.includes('abono') && (n.includes('cliente') || n.includes('me pago') || n.includes('me pagaron') || n.includes('recibi')) ){ kind = 'collection'; }
- else if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind = 'expense'; }
- else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind = 'purchase'; }
- else if(n.includes('venta') || n.includes('vendi') || n.includes('vender')){ kind = 'sale'; }
+ if(n.includes('proveedor') && (n.includes('pago')||n.includes('abono'))){ kind = 'supplier_payment'; }
+ else if((n.includes('deuda')||n.includes('abono')) && n.includes('gasto')){ kind = 'expense_payment'; }
+ else if(n.includes('abono') && (n.includes('cliente')||n.includes('recibi')) ){ kind = 'collection'; }
+ else if(n.includes('gasto')||n.includes('pague')||n.includes('recibo')){ kind = 'expense'; }
+ else if(n.includes('compra')||n.includes('compre')){ kind = 'purchase'; }
+ else if(n.includes('venta')||n.includes('vendi')){ kind = 'sale'; }
 
- if(!kind){
-  voicePreview.innerHTML = `<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No identifiqué la acción.</b><br>Empieza diciendo "Vendí...", "Compré...", "Gasto de...", "Abono de cliente...", "Pago a proveedor..." o "Pago de deuda de gasto...".</div>`;
-  return;
- }
-
- let payment = 'Efectivo';
- if(n.includes('nequi')) payment = 'Nequi';
- else if(n.includes('transferencia')) payment = 'Transferencia';
- else if(n.includes('tarjeta')) payment = 'Tarjeta';
- else if(n.includes('credito') || n.includes('debi')) payment = 'Crédito';
+ if(!kind){ voicePreview.innerHTML = `<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No identifiqué la acción.</b></div>`; return; }
+ let payment = 'Efectivo'; if(n.includes('nequi')) payment = 'Nequi'; else if(n.includes('transferencia')) payment = 'Transferencia'; else if(n.includes('credito')||n.includes('debi')) payment = 'Crédito';
 
  if(kind === 'collection' || kind === 'supplier_payment' || kind === 'expense_payment'){
-  const total = extractNumber(n);
-  const debtType = kind==='collection'?'client':kind==='supplier_payment'?'supplier':'expense';
-  const matches = [];
-  const nameMatch = text.match(/(?:de|al?|a la)\s+(?:cliente|proveedor)?\s*([a-zA-ZÀ-ÿ0-9\s]+?)(?:\s+por|\s+de\s+\d|\s+\d|$)/i);
-  const spokenName=(nameMatch?nameMatch[1].trim():'');
-  if(spokenName) matches.push(...partyMatch(debtType,spokenName));
-  if(total===0){voicePreview.innerHTML=`<div style="background:#fef3c7;padding:12px;border-radius:8px;color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Pagar deuda de Tienda Don Jorge por 200000".</div>`;return;}
+  const total = extractNumber(n), debtType = kind==='collection'?'client':kind==='supplier_payment'?'supplier':'expense';
+  if(total===0) return voicePreview.innerHTML=`<div style="background:#fef3c7;padding:12px;border-radius:8px;color:#92400e"><b>Falta el valor.</b></div>`;
   const all=debtItems(debtType);
-  const candidates=matches.length?matches:all;
-  const label=debtType==='client'?'Abono de cliente':debtType==='supplier'?'Pago a proveedor':'Pago de deuda de gasto';
-  const placeholder=debtType==='expense'?'Gasto':'Nombre';
   voicePreview.innerHTML=`<div style="padding:16px;border:1px solid var(--border);border-radius:12px;background:#fff">
-   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span class="badge ${debtType==='client'?'ok':'warn'}">${label}</span><b>${money(total)}</b></div>
-   ${candidates.length?`<div class="field full" style="text-align:left;margin-bottom:12px"><label>Selecciona la deuda a la que se aplicará el pago</label><select id="voiceDebtSelect" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">${candidates.map(d=>`<option value="${d.id}">${escapeHtml(d.party)} — pendiente ${money(d.remaining)} — ${d.date}</option>`).join('')}</select></div>`:
-   `<div style="background:#fee2e2;padding:12px;border-radius:8px;color:var(--danger);text-align:left">No encontré una deuda pendiente que coincida. Registra primero la deuda o revisa el nombre.</div>`}
-   <div class="field full" style="text-align:left;margin-bottom:12px"><label>${placeholder} (puedes corregirlo)</label><input id="voicePartyName" value="${escapeHtml((candidates[0]?.party)||spokenName||'')}"></div>
-   <div style="color:var(--text);margin-bottom:16px"><b>Pago:</b> ${payment}</div>
-   ${candidates.length?`<button class="btn btn-primary" style="width:100%" onclick='applyVoiceDebtPayment("${debtType}",${total},"${payment}")'>Confirmar y aplicar pago</button>`:''}
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span class="badge ${debtType==='client'?'ok':'warn'}">Pago de Deuda</span><b>${money(total)}</b></div>
+   ${all.length?`<div class="field full"><label>Selecciona la deuda</label><select id="voiceDebtSelect">${all.map(d=>`<option value="${d.id}">${escapeHtml(d.party)} — ${money(d.remaining)}</option>`).join('')}</select></div>`:'<div style="color:red">No hay deudas pendientes</div>'}
+   <button class="btn btn-primary" style="width:100%; margin-top:16px" onclick='applyVoiceDebtPayment("${debtType}",${total},"${payment}")'>Confirmar</button>
   </div>`;
   return;
  }
  if(kind === 'expense'){
-  const category = findExpenseCategory(n);
-  const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
-  const spokenDesc = (descMatch ? descMatch[1].trim() : '') || 'Gasto general';
-  const total = extractNumber(n);
-
-  if(total === 0){
-      voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Gasto de luz por 50000".</div>`;
-      return;
-  }
-
-  const isCustom = !category;
-  voicePreview.innerHTML = `
-   <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-        <span class="badge danger">Gasto Operativo</span>
-        <b>${money(total)}</b>
-    </div>
-    <div class="field full" style="margin-bottom:10px; text-align:left">
-        <label>Categoría (revisa y corrige si hace falta)</label>
-        <select id="voiceExpenseCat">
-            ${expenseCategoryNames.map(c => `<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
-            <option value="__custom__" ${isCustom ? 'selected' : ''}>Otro (personalizado)</option>
-        </select>
-    </div>
-    <div class="field full" id="voiceExpenseCustomWrap" style="margin-bottom:12px; text-align:left; display:${isCustom ? 'block' : 'none'}">
-        <label>Describe el gasto</label>
-        <input id="voiceExpenseCustomDesc" value="${escapeHtml(spokenDesc)}">
-    </div>
-    <div style="color:var(--text); margin-bottom:16px"><b>Pago:</b> ${payment}</div>
-    <button class="btn btn-primary" style="width:100%" onclick="applyVoiceExpenseFromPreview(${total},'${payment}')">Confirmar Gasto</button>
+  const total = extractNumber(n), category = findExpenseCategory(n) || 'Gasto general';
+  if(total === 0) return voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b></div>`;
+  voicePreview.innerHTML = `<div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px"><span class="badge danger">Gasto Operativo</span><b>${money(total)}</b></div>
+    <div class="field full" style="text-align:left"><label>Categoría</label><input id="vExpCat" value="${category}"></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:16px" onclick="applyVoiceExpense(document.getElementById('vExpCat').value,${total},'${payment}')">Confirmar Gasto</button>
    </div>`;
-
-  const catSelect = document.getElementById('voiceExpenseCat');
-  if(catSelect){
-   catSelect.addEventListener('change', function(){
-    document.getElementById('voiceExpenseCustomWrap').style.display = this.value === '__custom__' ? 'block' : 'none';
-   });
-  }
   return;
  }
 
  const p = fuzzyFindProduct(text);
- if(!p){
-  voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b><br>Menciona "Volcán", "Finca", "Mujeres", "Origen" o "Colina".</div>`;
-  return;
- }
-
- let qty = 1;
- const words = n.split(' ');
- for(let w of words){
-     if(!isNaN(w) && parseInt(w) > 0 && parseInt(w) < 1000){ qty = parseInt(w); break; }
- }
-
- let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); 
- if(!amount || amount === qty || amount < 100) { 
-     amount = (kind === 'sale' ? p.sale : p.cost); 
- }
- 
+ if(!p) return voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>No reconocí el producto.</b></div>`;
+ let qty = 1; const words = n.split(' '); for(let w of words){ if(!isNaN(w) && parseInt(w)>0 && parseInt(w)<1000){ qty = parseInt(w); break; } }
+ let amount = extractNumber(n.substring(n.indexOf(qty.toString()) + 1)); if(!amount || amount === qty) amount = (kind === 'sale' ? p.sale : p.cost);
  const total = qty * amount;
 
  voicePreview.innerHTML = `
    <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-        <span class="badge ${kind==='sale'?'ok':'warn'}">${kind==='sale'?'Venta':'Compra'}</span>
-        <b style="font-size:18px">${money(total)}</b>
-    </div>
-    <div style="color:var(--text); margin-bottom:16px; line-height:1.5">
-        <b>Producto:</b> ${p.name}<br>
-        <b>Detalle:</b> ${qty} unid. a ${money(amount)} c/u<br>
-        <b>Método:</b> ${payment}
-    </div>
-    ${kind==='sale'?`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Cliente <span class="muted">(detectado por voz)</span></label><input id="voiceClientName" placeholder="Ej. Tienda Doña Lucía" value="${escapeHtml(extractClientName(text))}"></div>`:`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Proveedor <span class="muted">(detectado por voz)</span></label><input id="voiceSupplierName" placeholder="Ej. Distribuidora La Esperanza" value="${escapeHtml(extractSupplierName(text))}"></div>`}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px"><span class="badge ${kind==='sale'?'ok':'warn'}">${kind==='sale'?'Venta':'Compra'}</span><b>${money(total)}</b></div>
+    <div style="text-align:left; line-height:1.5; margin-bottom:16px"><b>Producto:</b> ${p.name}<br><b>Detalle:</b> ${qty} unid. a ${money(amount)} c/u</div>
     <button class="btn btn-primary" style="width:100%" onclick='applyVoiceOp("${kind}","${p.id}",${qty},${amount},"${payment}")'>Confirmar Operación</button>
    </div>`;
 }
 
-function applyVoiceExpenseFromPreview(total, payment){
- const sel = document.getElementById('voiceExpenseCat');
- let desc = 'Gasto general';
- if(sel){
-  if(sel.value === '__custom__'){
-   const custom = document.getElementById('voiceExpenseCustomDesc');
-   desc = (custom && custom.value.trim()) || 'Gasto general';
-  } else {
-   desc = sel.value;
-  }
- }
- applyVoiceExpense(desc, total, payment);
+async function applyVoiceExpense(desc,total,payment){
+ const id = 'e'+Date.now();
+ await supabase.from('expenses').insert([{ id, date:today, description:desc, total, payment, type:payment==='Crédito'?'Crédito':'Contado' }]);
+ closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Gasto registrado por voz');
 }
 
-function applyVoiceExpense(desc,total,payment){
- state.expenses.unshift({id:'e'+Date.now(),date:today,description:desc,total,payment,type:payment==='Crédito'?'Crédito':'Contado'});
- save(); render(); closeModal('voiceModal'); showToast('Gasto registrado por voz');
+async function applyVoiceDebtPayment(type,total,payment){
+ const sel=document.getElementById('voiceDebtSelect'), debtId=sel?.value, d=getDebt(type,debtId);
+ if(!d)return showToast('No se encontró deuda'); if(total>d.remaining)return showToast('El pago supera la deuda');
+ const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
+ const common = { id, date:today, amount:total, payment, note:'Registrado por voz', debt_id:d.id };
+ if(type==='client') await supabase.from('collections').insert([{...common, client:d.party}]);
+ if(type==='supplier') await supabase.from('supplier_payments').insert([{...common, supplier:d.party}]);
+ if(type==='expense') await supabase.from('expense_payments').insert([{...common, description:d.party}]);
+ closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Pago aplicado');
 }
 
-function applyVoiceDebtPayment(type,total,payment){
- const sel=document.getElementById('voiceDebtSelect'), debtId=sel?.value;
- const d=getDebt(type,debtId);
- if(!d)return showToast('No se encontró la deuda seleccionada');
- if(total>d.remaining)return showToast('El pago supera la deuda pendiente de '+money(d.remaining));
- const name=(document.getElementById('voicePartyName')?.value.trim())||d.party;
- if(type==='client')state.collections.unshift({id:'c'+Date.now(),date:today,client:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
- if(type==='supplier')state.supplierPayments.unshift({id:'sp'+Date.now(),date:today,supplier:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
- if(type==='expense')state.expensePayments.unshift({id:'ep'+Date.now(),date:today,description:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
- save();render();closeModal('voiceModal');showToast('Pago aplicado correctamente a la deuda');
-}
-function applyVoiceCollection(total,payment){applyVoiceDebtPayment('client',total,payment)}
-function applyVoiceSupplierPayment(total,payment){applyVoiceDebtPayment('supplier',total,payment)}
-function applyVoiceExpensePayment(total,payment){applyVoiceDebtPayment('expense',total,payment)}
-
-
-function applyVoiceOp(kind,pid,qty,amount,payment){
+async function applyVoiceOp(kind,pid,qty,amount,payment){
  const p = product(pid), total = qty*amount, type = payment==='Crédito'?'Crédito':'Contado';
  if(kind === 'sale'){
-     if(qty > p.stock){ showToast('Error: Stock insuficiente'); return; }
-     const clientInput=document.getElementById('voiceClientName');
-     const client=(clientInput?.value.trim()) || 'Cliente mostrador';
-     state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type,client}); p.stock -= qty;
+     if(qty > p.stock){ showToast('Stock insuficiente'); return; }
+     const id = 's'+Date.now();
+     await supabase.from('sales').insert([{ id, date:today, product_id:pid, qty, total, payment, type, client: 'Cliente voz' }]);
+     await supabase.from('products').update({stock: p.stock - qty}).eq('id', pid);
  } else {
-     const supplierInput=document.getElementById('voiceSupplierName');
-     const supplier=(supplierInput?.value.trim()) || 'Proveedor general';
-     // El proveedor queda guardado directamente en la compra aunque sea completamente nuevo.
-     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type,supplier}); p.stock += qty;
+     const id = 'p'+Date.now();
+     await supabase.from('purchases').insert([{ id, date:today, product_id:pid, qty, total, payment, type, supplier: 'Proveedor voz' }]);
+     await supabase.from('products').update({stock: p.stock + qty}).eq('id', pid);
  }
- save(); render(); closeModal('voiceModal'); showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz');
+ closeModal('voiceModal'); await loadStateFromSupabase(); showToast((kind==='sale'?'Venta':'Compra')+' registrada');
 }
-</script>
 
-<script>
-(function(){
-  function hideAppLoader(){
-    const loader=document.getElementById('appLoader');
-    if(!loader) return;
-    loader.classList.add('hide');
-    setTimeout(()=>loader.remove(),500);
-  }
-  // Nunca bloquear la aplicación si algún recurso externo tarda o falla.
-  if(document.readyState==='complete') setTimeout(hideAppLoader,350);
-  else window.addEventListener('load',()=>setTimeout(hideAppLoader,350),{once:true});
-  // Fallback de seguridad.
-  setTimeout(hideAppLoader,2500);
+// Inicialización Automática
+(async function(){
+  function hideAppLoader(){ const loader=document.getElementById('appLoader'); if(!loader) return; loader.classList.add('hide'); setTimeout(()=>loader.remove(),500); }
+  await loadStateFromSupabase();
+  hideAppLoader();
 })();
 </script>
 </body>
