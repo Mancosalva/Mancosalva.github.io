@@ -438,10 +438,7 @@ let state = defaultState();
 
 async function loadStateFromSupabase() {
   try {
-    const [
-      { data: products }, { data: purchases }, { data: sales },
-      { data: expenses }, { data: collections }, { data: supplierPayments }, { data: expensePayments }
-    ] = await Promise.all([
+    const results = await Promise.all([
       supabaseClient.from('products').select('*'),
       supabaseClient.from('purchases').select('*'),
       supabaseClient.from('sales').select('*'),
@@ -450,6 +447,16 @@ async function loadStateFromSupabase() {
       supabaseClient.from('supplier_payments').select('*'),
       supabaseClient.from('expense_payments').select('*')
     ]);
+
+    const tableNames = ['products','purchases','sales','expenses','collections','supplier_payments','expense_payments'];
+    const failedTables = [];
+    results.forEach((r, i) => { if(r.error){ console.error(`Error leyendo ${tableNames[i]}:`, r.error); failedTables.push(tableNames[i]); } });
+    if(failedTables.length){ showToast('❌ Error leyendo: '+failedTables.join(', ')+' (revisa políticas RLS)'); }
+
+    const [
+      { data: products }, { data: purchases }, { data: sales },
+      { data: expenses }, { data: collections }, { data: supplierPayments }, { data: expensePayments }
+    ] = results;
 
     // Mapeo de snake_case a camelCase para mantener la compatibilidad del frontend
     state = {
@@ -466,6 +473,18 @@ async function loadStateFromSupabase() {
     console.error('Error cargando BD:', err);
     showToast('Error de conexión con la nube');
   }
+}
+
+// Envuelve cualquier operación de Supabase (insert/update/delete) y muestra el error real si falla,
+// en vez de dejar que la app diga "éxito" cuando en realidad no se guardó nada.
+async function dbOp(builder){
+  const { error } = await builder;
+  if(error){
+    console.error('Supabase error:', error);
+    showToast('❌ Error BD: '+error.message);
+    return false;
+  }
+  return true;
 }
 
 function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
@@ -586,7 +605,8 @@ function newExpense(){
  document.getElementById('expenseForm').onsubmit = async e => {
     e.preventDefault();
     const id = 'e' + Date.now();
-    await supabaseClient.from('expenses').insert([{ id, date: eDate.value, description: eDesc.value.trim(), total: +eTotal.value, payment: ePayment.value, type: ePayment.value === 'Crédito' ? 'Crédito' : 'Contado' }]);
+    const ok = await dbOp(supabaseClient.from('expenses').insert([{ id, date: eDate.value, description: eDesc.value.trim(), total: +eTotal.value, payment: ePayment.value, type: ePayment.value === 'Crédito' ? 'Crédito' : 'Contado' }]));
+    if(!ok) return;
     closeModal('modal'); await loadStateFromSupabase(); showToast('Gasto registrado');
  }
 }
@@ -603,7 +623,8 @@ function newProduct(){
  document.getElementById('productForm').onsubmit = async e => {
     e.preventDefault();
     if(product(pId.value)) return showToast('Código ya existe');
-    await supabaseClient.from('products').insert([{ id: pId.value.trim(), name: pName.value.trim(), stock: +pStock.value, cost: +pCost.value, sale: +pSale.value, min_stock: +pMinStock.value||0, expiry: pExpiry.value||null }]);
+    const ok = await dbOp(supabaseClient.from('products').insert([{ id: pId.value.trim(), name: pName.value.trim(), stock: +pStock.value, cost: +pCost.value, sale: +pSale.value, min_stock: +pMinStock.value||0, expiry: pExpiry.value||null }]));
+    if(!ok) return;
     closeModal('modal'); await loadStateFromSupabase(); showToast('Producto creado');
  }
 }
@@ -621,7 +642,8 @@ function editProduct(id){
  openModal('modal');
  document.getElementById('editProductForm').onsubmit = async e => {
     e.preventDefault();
-    await supabaseClient.from('products').update({ name: epName.value.trim(), cost: +epCost.value, sale: +epSale.value, min_stock: +epMinStock.value||0, expiry: epExpiry.value||null }).eq('id', p.id);
+    const ok = await dbOp(supabaseClient.from('products').update({ name: epName.value.trim(), cost: +epCost.value, sale: +epSale.value, min_stock: +epMinStock.value||0, expiry: epExpiry.value||null }).eq('id', p.id));
+    if(!ok) return;
     closeModal('modal'); await loadStateFromSupabase(); showToast('Producto actualizado');
  }
 }
@@ -640,7 +662,8 @@ function adjustStock(id){
     e.preventDefault();
     const qty = +ajQty.value, delta = ajTipo.value === 'in' ? qty : -qty;
     if(p.stock+delta<0){showToast('El ajuste dejaría el stock en negativo');return}
-    await supabaseClient.from('products').update({ stock: p.stock+delta }).eq('id', p.id);
+    const ok = await dbOp(supabaseClient.from('products').update({ stock: p.stock+delta }).eq('id', p.id));
+    if(!ok) return;
     closeModal('modal'); await loadStateFromSupabase(); showToast('Inventario ajustado ('+ajMotivo.value+')');
  }
 }
@@ -722,9 +745,11 @@ function setupDebtPaymentForm(type){
   const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
   const common = { id, date: debtDate.value, amount, payment: debtPayment.value, note: debtNote.value.trim(), debt_id: d.id };
   
-  if(type==='client') await supabaseClient.from('collections').insert([{...common, client: d.party }]);
-  if(type==='supplier') await supabaseClient.from('supplier_payments').insert([{...common, supplier: d.party }]);
-  if(type==='expense') await supabaseClient.from('expense_payments').insert([{...common, description: d.party }]);
+  let ok = true;
+  if(type==='client') ok = await dbOp(supabaseClient.from('collections').insert([{...common, client: d.party }]));
+  if(type==='supplier') ok = await dbOp(supabaseClient.from('supplier_payments').insert([{...common, supplier: d.party }]));
+  if(type==='expense') ok = await dbOp(supabaseClient.from('expense_payments').insert([{...common, description: d.party }]));
+  if(!ok) return;
   
   closeModal('modal'); await loadStateFromSupabase(); showToast('Pago aplicado a la deuda');
  };
@@ -751,39 +776,44 @@ document.addEventListener('submit', async e => {
   const id = (isSale ? 's' : 'p') + Date.now();
   const newStock = isSale ? p.stock - qty : p.stock + qty;
   
+  let ok;
   if(isSale){
-    await supabaseClient.from('sales').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, client: party||'Cliente mostrador' }]);
+    ok = await dbOp(supabaseClient.from('sales').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, client: party||'Cliente mostrador' }]));
   } else {
-    await supabaseClient.from('purchases').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, supplier: party||'Proveedor general' }]);
+    ok = await dbOp(supabaseClient.from('purchases').insert([{ id, date: fDate.value, product_id: pid, qty, total, payment: fPayment.value, type: fType.value, supplier: party||'Proveedor general' }]));
   }
+  if(!ok) return;
   
-  await supabaseClient.from('products').update({ stock: newStock }).eq('id', pid);
+  ok = await dbOp(supabaseClient.from('products').update({ stock: newStock }).eq('id', pid));
+  if(!ok) return;
   closeModal('modal'); await loadStateFromSupabase(); showToast(isSale ? 'Venta registrada' : 'Compra registrada');
  }
 });
 
 async function del(type, id){
  if(!confirm('¿Eliminar este registro?')) return;
+ let ok = true;
  if(type==='sale'){
     const x=state.sales.find(v=>v.id===id);
     if(x){
         const p = product(x.productId);
-        await supabaseClient.from('products').update({stock: p.stock+x.qty}).eq('id', x.productId);
+        ok = await dbOp(supabaseClient.from('products').update({stock: p.stock+x.qty}).eq('id', x.productId));
     }
-    await supabaseClient.from('sales').delete().eq('id',id);
+    if(ok) ok = await dbOp(supabaseClient.from('sales').delete().eq('id',id));
  }
  else if(type==='purchase'){
     const x=state.purchases.find(v=>v.id===id);
     if(x){
         const p = product(x.productId);
-        await supabaseClient.from('products').update({stock: p.stock-x.qty}).eq('id', x.productId);
+        ok = await dbOp(supabaseClient.from('products').update({stock: p.stock-x.qty}).eq('id', x.productId));
     }
-    await supabaseClient.from('purchases').delete().eq('id',id);
+    if(ok) ok = await dbOp(supabaseClient.from('purchases').delete().eq('id',id));
  }
- else if(type==='expense') await supabaseClient.from('expenses').delete().eq('id',id);
- else if(type==='collection') await supabaseClient.from('collections').delete().eq('id',id);
- else if(type==='supplierPayment') await supabaseClient.from('supplier_payments').delete().eq('id',id);
- else if(type==='expensePayment') await supabaseClient.from('expense_payments').delete().eq('id',id);
+ else if(type==='expense') ok = await dbOp(supabaseClient.from('expenses').delete().eq('id',id));
+ else if(type==='collection') ok = await dbOp(supabaseClient.from('collections').delete().eq('id',id));
+ else if(type==='supplierPayment') ok = await dbOp(supabaseClient.from('supplier_payments').delete().eq('id',id));
+ else if(type==='expensePayment') ok = await dbOp(supabaseClient.from('expense_payments').delete().eq('id',id));
+ if(!ok) return;
  
  await loadStateFromSupabase(); showToast('Registro eliminado');
 }
@@ -1020,7 +1050,8 @@ function processVoiceCommand(text){
 
 async function applyVoiceExpense(desc,total,payment){
  const id = 'e'+Date.now();
- await supabaseClient.from('expenses').insert([{ id, date:today, description:desc, total, payment, type:payment==='Crédito'?'Crédito':'Contado' }]);
+ const ok = await dbOp(supabaseClient.from('expenses').insert([{ id, date:today, description:desc, total, payment, type:payment==='Crédito'?'Crédito':'Contado' }]));
+ if(!ok) return;
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Gasto registrado por voz');
 }
 
@@ -1029,23 +1060,30 @@ async function applyVoiceDebtPayment(type,total,payment){
  if(!d)return showToast('No se encontró deuda'); if(total>d.remaining)return showToast('El pago supera la deuda');
  const id = (type==='client'?'c':type==='supplier'?'sp':'ep') + Date.now();
  const common = { id, date:today, amount:total, payment, note:'Registrado por voz', debt_id:d.id };
- if(type==='client') await supabaseClient.from('collections').insert([{...common, client:d.party}]);
- if(type==='supplier') await supabaseClient.from('supplier_payments').insert([{...common, supplier:d.party}]);
- if(type==='expense') await supabaseClient.from('expense_payments').insert([{...common, description:d.party}]);
+ let ok = true;
+ if(type==='client') ok = await dbOp(supabaseClient.from('collections').insert([{...common, client:d.party}]));
+ if(type==='supplier') ok = await dbOp(supabaseClient.from('supplier_payments').insert([{...common, supplier:d.party}]));
+ if(type==='expense') ok = await dbOp(supabaseClient.from('expense_payments').insert([{...common, description:d.party}]));
+ if(!ok) return;
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast('Pago aplicado');
 }
 
 async function applyVoiceOp(kind,pid,qty,amount,payment){
  const p = product(pid), total = qty*amount, type = payment==='Crédito'?'Crédito':'Contado';
+ let ok;
  if(kind === 'sale'){
      if(qty > p.stock){ showToast('Stock insuficiente'); return; }
      const id = 's'+Date.now();
-     await supabaseClient.from('sales').insert([{ id, date:today, product_id:pid, qty, total, payment, type, client: 'Cliente voz' }]);
-     await supabaseClient.from('products').update({stock: p.stock - qty}).eq('id', pid);
+     ok = await dbOp(supabaseClient.from('sales').insert([{ id, date:today, product_id:pid, qty, total, payment, type, client: 'Cliente voz' }]));
+     if(!ok) return;
+     ok = await dbOp(supabaseClient.from('products').update({stock: p.stock - qty}).eq('id', pid));
+     if(!ok) return;
  } else {
      const id = 'p'+Date.now();
-     await supabaseClient.from('purchases').insert([{ id, date:today, product_id:pid, qty, total, payment, type, supplier: 'Proveedor voz' }]);
-     await supabaseClient.from('products').update({stock: p.stock + qty}).eq('id', pid);
+     ok = await dbOp(supabaseClient.from('purchases').insert([{ id, date:today, product_id:pid, qty, total, payment, type, supplier: 'Proveedor voz' }]));
+     if(!ok) return;
+     ok = await dbOp(supabaseClient.from('products').update({stock: p.stock + qty}).eq('id', pid));
+     if(!ok) return;
  }
  closeModal('voiceModal'); await loadStateFromSupabase(); showToast((kind==='sale'?'Venta':'Compra')+' registrada');
 }
