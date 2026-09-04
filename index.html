@@ -479,23 +479,34 @@ if(SpeechRecognition){
  };
 
  recognition.onresult = e => {
-  // IMPORTANTE: e.results trae SIEMPRE la lista completa acumulada desde que empezó
-  // la escucha (no solo lo nuevo). Antes sumábamos con "+=" cada vez que llegaba un
-  // evento, y como el navegador a veces reenvía el mismo resultado "final" más de una
-  // vez, el texto se duplicaba (ej. "vendí vendí 10 vendí 10 unidades..."). Ahora
-  // reconstruimos todo desde cero en cada evento, así nunca se repite nada.
-  let newFinal = '';
-  let newInterim = '';
+  // IMPORTANTE: en varios navegadores/celulares (Android sobre todo), el motor de voz
+  // no manda fragmentos nuevos como "final" — manda la MISMA frase completa creciendo
+  // varias veces ("compre" -> "compre 10" -> "compre 10 unidades" -> ...) y cada una
+  // marcada como final. Si las sumamos todas, el texto se duplica. Por eso, cada vez
+  // que un resultado final YA CONTIENE lo que teníamos antes, lo REEMPLAZAMOS (es una
+  // versión más completa de lo mismo), en vez de pegarlo al final.
+  let interim = '';
   for(let i = 0; i < e.results.length; i++){
-   const transcript = e.results[i][0].transcript;
-   if(e.results[i].isFinal){
-    newFinal += transcript + ' ';
+   const result = e.results[i];
+   const transcript = result[0].transcript.trim();
+   if(!transcript) continue;
+   if(result.isFinal){
+    const normNew = normalizeStr(transcript);
+    const normCurrent = normalizeStr(finalTranscript.trim());
+    if(!normCurrent || normNew.includes(normCurrent)){
+     // Es la misma frase, más completa/corregida: reemplaza, no duplica
+     finalTranscript = transcript;
+    } else if(normCurrent.includes(normNew)){
+     // Ya teníamos algo igual o más completo: lo ignoramos
+    } else {
+     // Contenido genuinamente distinto (otra frase nueva): lo agregamos
+     finalTranscript = finalTranscript.trim() + ' ' + transcript;
+    }
    } else {
-    newInterim += transcript;
+    interim += transcript;
    }
   }
-  finalTranscript = newFinal;
-  interimBuffer = newInterim;
+  interimBuffer = interim;
   updateTranscriptView();
  };
 
