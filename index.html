@@ -207,9 +207,27 @@ body{font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;background:linea
  .fab-mic{bottom:20px;right:20px}
 }
 
+
+/* ===== UX polish: microinteractions, skeletons & empty states ===== */
+button,.btn,.nav button,.notification-item,.period-tabs button{transition:transform .16s ease,background-color .2s ease,color .2s ease,box-shadow .2s ease,filter .2s ease}
+button:active,.btn:active,.nav button:active{transform:scale(.97)}
+.btn-primary:active{filter:brightness(.93)}
+.card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.card:hover{box-shadow:0 10px 28px -10px rgba(15,118,110,.16);border-color:rgba(16,185,129,.18)}
+.section.active{animation:sectionEnter .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes sectionEnter{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:none}}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:150px;background:linear-gradient(145deg,#fff,#f0fdf4);border:1px dashed rgba(16,185,129,.3);color:var(--muted);font-weight:600}
+.empty::before{content:'✦';display:grid;place-items:center;width:52px;height:52px;border-radius:18px;background:#d1fae5;color:#0f766e;font-size:28px}
+.empty-table{padding:28px!important;text-align:center;color:var(--muted);font-weight:600;background:#f8fffb}
+.skeleton-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:grid;grid-template-columns:260px 1fr;gap:32px;padding:32px;transition:opacity .35s ease,visibility .35s ease}
+.skeleton-screen.hide{opacity:0;visibility:hidden}
+.sk-col,.sk-main{display:grid;gap:18px;align-content:start}.sk{border-radius:18px;background:linear-gradient(90deg,#edf2f7 25%,#f8fafc 50%,#edf2f7 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}.sk.logo{height:58px}.sk.nav{height:48px}.sk.title{width:45%;height:40px}.sk.hero{height:180px}.sk.kpis{height:130px}@keyframes shimmer{to{background-position:-200% 0}}
+@media(max-width:900px){.skeleton-screen{grid-template-columns:1fr;padding:18px}.sk-col{display:none}}
+
 </style>
 </head>
 <body>
+<div id="appLoader" class="skeleton-screen" aria-label="Cargando ContaVoz"><div class="sk-col"><div class="sk logo"></div><div class="sk nav"></div><div class="sk nav"></div><div class="sk nav"></div><div class="sk nav"></div><div class="sk nav"></div></div><div class="sk-main"><div class="sk title"></div><div class="sk hero"></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px"><div class="sk kpis"></div><div class="sk kpis"></div><div class="sk kpis"></div><div class="sk kpis"></div></div></div></div>
 <div class="app">
   <aside class="sidebar">
     <button class="sidebar-close" id="sidebarCloseBtn" aria-label="Cerrar menú" title="Cerrar menú">×</button>
@@ -532,13 +550,20 @@ const pageMeta={
  reportes:['Reportes','Caja, utilidades y deudas.']
 };
 
-function go(section){
+function go(section, addHistory=true){
+ if(!pageMeta[section]) section='dashboard';
+ const current=document.querySelector('.section.active')?.id;
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===section));
  document.getElementById('pageTitle').textContent=pageMeta[section][0];
  document.getElementById('pageSubtitle').textContent=pageMeta[section][1];
+ if(addHistory && current!==section) history.pushState({section},'',`#${section}`);
  render(); window.scrollTo({top:0,behavior:'smooth'});
 }
+// Cada sección funciona como una vista interna: Atrás del celular navega entre vistas, no abandona la app.
+window.addEventListener('popstate',e=>go(e.state?.section || location.hash.replace('#','') || 'dashboard',false));
+const initialSection=location.hash.replace('#','');
+history.replaceState({section:pageMeta[initialSection]?initialSection:'dashboard'},'',pageMeta[initialSection]?location.hash:'#dashboard');
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
 
@@ -843,7 +868,7 @@ function render(){
         }
     }
     return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`;
- }).join('') || `<tr><td colspan="8" class="empty">No hay ventas en este periodo</td></tr>`;
+ }).join('') || `<tr><td colspan="8" class="empty empty-table">Aún no hay ventas en este periodo</td></tr>`;
  
  collectionsBody.innerHTML=collectionsP.map(c=>`<tr><td>${c.date}</td><td><b>${c.client}</b></td><td>${money(c.amount)}</td><td>${c.payment}</td><td>${c.note||'—'}</td><td><button class="btn btn-danger" onclick="del('collection','${c.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay abonos en este periodo</td></tr>`;
 
@@ -869,7 +894,7 @@ function render(){
         }
     }
     return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`;
- }).join('') || `<tr><td colspan="8" class="empty">No hay compras en este periodo</td></tr>`;
+ }).join('') || `<tr><td colspan="8" class="empty empty-table">Aún no hay compras en este periodo</td></tr>`;
  
  supplierPaymentsBody.innerHTML=supplierPaymentsP.map(sp=>`<tr><td>${sp.date}</td><td><b>${sp.supplier}</b></td><td>${money(sp.amount)}</td><td>${sp.payment}</td><td>${sp.note||'—'}</td><td><button class="btn btn-danger" onclick="del('supplierPayment','${sp.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
@@ -895,7 +920,7 @@ function render(){
         }
     }
     return `<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`;
- }).join('') || `<tr><td colspan="6" class="empty">No hay gastos en este periodo</td></tr>`;
+ }).join('') || `<tr><td colspan="6" class="empty empty-table">Aún no hay gastos en este periodo</td></tr>`;
  
  expensePaymentsBody.innerHTML=expensePaymentsP.map(ep=>`<tr><td>${ep.date}</td><td><b>${ep.description}</b></td><td>${money(ep.amount)}</td><td>${ep.payment}</td><td>${ep.note||'—'}</td><td><button class="btn btn-danger" onclick="del('expensePayment','${ep.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
@@ -1481,6 +1506,22 @@ function applyVoiceOp(kind,pid,qty,amount,payment){
  }
  save(); render(); closeModal('voiceModal'); showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz');
 }
+</script>
+
+<script>
+(function(){
+  function hideAppLoader(){
+    const loader=document.getElementById('appLoader');
+    if(!loader) return;
+    loader.classList.add('hide');
+    setTimeout(()=>loader.remove(),500);
+  }
+  // Nunca bloquear la aplicación si algún recurso externo tarda o falla.
+  if(document.readyState==='complete') setTimeout(hideAppLoader,350);
+  else window.addEventListener('load',()=>setTimeout(hideAppLoader,350),{once:true});
+  // Fallback de seguridad.
+  setTimeout(hideAppLoader,2500);
+})();
 </script>
 </body>
 </html>
