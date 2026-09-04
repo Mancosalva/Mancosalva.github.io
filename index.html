@@ -120,6 +120,23 @@ td b{color:#111827}
   .modal-box{max-height:85vh;padding:24px}
   .sidebar{padding:16px}
 }
+
+/* ---- Selector de periodo (diario/semanal/mensual) ---- */
+.period-tabs{display:inline-flex;background:#eef2f7;border-radius:10px;padding:4px;gap:4px}
+.period-tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;color:var(--muted)}
+.period-tabs button.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:28px 0 12px;flex-wrap:wrap}
+.subhead h4{margin:0;font-size:17px;font-weight:800}
+.mini-kpis{grid-template-columns:repeat(3,1fr);margin-bottom:20px}
+.alert-banner{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:14px;margin-bottom:14px;border:1px solid}
+.alert-banner.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.alert-banner.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.alert-banner b{display:block;margin-bottom:2px}
+.alert-banner .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;background:rgba(255,255,255,0.7);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.product-card-foot{display:flex;gap:8px;margin-top:12px}
+.product-card-foot .btn{flex:1;padding:8px;font-size:12px}
+@media(max-width:1050px){.mini-kpis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -161,6 +178,7 @@ td b{color:#111827}
           <button class="btn btn-light" data-action="new-sale" style="color:var(--text)">＋ Registro Manual</button>
         </div>
       </div>
+      <div id="dashAlerts" style="margin-top:20px"></div>
       <div class="grid kpis" style="margin-top:24px">
         <div class="card kpi"><div><small>Ingresos (mes)</small><strong id="kpiSales">$0</strong></div><div class="kpi-icon">💰</div></div>
         <div class="card kpi"><div><small>Costos</small><strong id="kpiCosts">$0</strong></div><div class="kpi-icon">🧾</div></div>
@@ -174,25 +192,91 @@ td b{color:#111827}
     </section>
 
     <section id="ingresos" class="section">
-      <div class="card"><div class="toolbar"><div><b>Ingresos y ventas</b></div><button class="btn btn-primary" data-action="new-sale">＋ Nueva venta</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <div><b>Ingresos y ventas</b></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div class="period-tabs" data-period-group="ingresos">
+              <button data-period="dia" class="active">Diario</button><button data-period="semana">Semanal</button><button data-period="mes">Mensual</button><button data-period="todo">Todo</button>
+            </div>
+            <button class="btn btn-primary" data-action="new-sale">＋ Nueva venta</button>
+          </div>
+        </div>
+        <div class="grid mini-kpis">
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Ventas del periodo</small><strong id="ingPeriodTotal">$0</strong></div><div class="kpi-icon">💰</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Abonos recibidos (periodo)</small><strong id="ingPeriodAbonos">$0</strong></div><div class="kpi-icon">🤝</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Cartera pendiente (total)</small><strong id="ingCartera">$0</strong></div><div class="kpi-icon">📇</div></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cliente</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div>
+        <div class="subhead"><h4>Abonos de clientes</h4><button class="btn btn-light" data-action="new-collection">＋ Registrar abono</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="collectionsBody"></tbody></table></div>
+      </div>
     </section>
 
     <section id="compras" class="section">
-      <div class="card"><div class="toolbar"><div><b>Compras</b></div><button class="btn btn-primary" data-action="new-purchase">＋ Nueva compra</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <div><b>Compras</b></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div class="period-tabs" data-period-group="compras">
+              <button data-period="dia" class="active">Diario</button><button data-period="semana">Semanal</button><button data-period="mes">Mensual</button><button data-period="todo">Todo</button>
+            </div>
+            <button class="btn btn-primary" data-action="new-purchase">＋ Nueva compra</button>
+          </div>
+        </div>
+        <div class="grid mini-kpis">
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Compras del periodo</small><strong id="comPeriodTotal">$0</strong></div><div class="kpi-icon">🛒</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Pagos a proveedores (periodo)</small><strong id="comPeriodPagos">$0</strong></div><div class="kpi-icon">🤝</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Por pagar (total)</small><strong id="comPorPagar">$0</strong></div><div class="kpi-icon">📇</div></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div>
+        <div class="subhead"><h4>Pagos a proveedores</h4><button class="btn btn-light" data-action="new-supplier-payment">＋ Registrar pago</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="supplierPaymentsBody"></tbody></table></div>
+      </div>
     </section>
 
     <section id="gastos" class="section">
-      <div class="card"><div class="toolbar"><div><b>Gastos</b></div><button class="btn btn-primary" data-action="new-expense">＋ Nuevo gasto</button></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div></div>
+      <div class="card">
+        <div class="toolbar">
+          <div><b>Gastos</b></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div class="period-tabs" data-period-group="gastos">
+              <button data-period="dia" class="active">Diario</button><button data-period="semana">Semanal</button><button data-period="mes">Mensual</button><button data-period="todo">Todo</button>
+            </div>
+            <button class="btn btn-primary" data-action="new-expense">＋ Nuevo gasto</button>
+          </div>
+        </div>
+        <div class="grid mini-kpis">
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Gastos del periodo</small><strong id="gasPeriodTotal">$0</strong></div><div class="kpi-icon">💸</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Pagos de deuda (periodo)</small><strong id="gasPeriodPagos">$0</strong></div><div class="kpi-icon">🤝</div></div>
+          <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Deuda de gastos (total)</small><strong id="gasPorPagar">$0</strong></div><div class="kpi-icon">📇</div></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div>
+        <div class="subhead"><h4>Pagos de gastos a crédito</h4><button class="btn btn-light" data-action="new-expense-payment">＋ Registrar pago</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="expensePaymentsBody"></tbody></table></div>
+      </div>
     </section>
 
     <section id="inventario" class="section">
-      <div class="card"><div class="toolbar"><div><b>Inventario</b></div><button class="btn btn-primary" data-action="new-product">＋ Nuevo producto</button></div><div class="grid cols-3" id="inventoryCards"></div></div>
+      <div class="card">
+        <div class="toolbar"><div><b>Inventario</b></div><button class="btn btn-primary" data-action="new-product">＋ Nuevo producto</button></div>
+        <div id="inventoryAlerts"></div>
+        <div class="grid cols-3" id="inventoryCards"></div>
+      </div>
     </section>
 
     <section id="reportes" class="section">
+      <div class="toolbar" style="margin-bottom:8px">
+        <div><b>Periodo del reporte</b></div>
+        <div class="period-tabs" data-period-group="reportes">
+          <button data-period="dia">Diario</button><button data-period="semana">Semanal</button><button data-period="mes">Mensual</button><button data-period="todo" class="active">Todo</button>
+        </div>
+      </div>
       <div class="grid cols-2">
-        <div class="card"><b>Flujo de caja</b><div class="muted" style="margin-bottom:16px">Entradas y salidas efectivas.</div><div class="grid cols-2"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><span class="muted">Total disponible</span><div class="report-total" style="color:var(--ok)" id="rCashTotal">$0</div></div>
-        <div class="card"><b>Estado de resultados</b><div class="muted" style="margin-bottom:16px">Operaciones de contado y crédito.</div><div class="list"><div class="list-item"><span>Ingresos Totales</span><b id="rIncome">$0</b></div><div class="list-item"><span>Costo de mercancía</span><b id="rCOGS">$0</b></div><div class="list-item"><span>Gastos operativos</span><b id="rExpenses">$0</b></div><div class="list-item" style="background:#f0fdf4;border-color:#bbf7d0"><span>Utilidad / Pérdida</span><b id="rProfit" style="color:var(--ok)">$0</b></div></div></div>
+        <div class="card"><b>Flujo de caja</b><div class="muted" style="margin-bottom:16px">Entradas y salidas efectivas en el periodo seleccionado (incluye abonos y pagos de deuda).</div><div class="grid cols-2"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><span class="muted">Flujo neto del periodo</span><div class="report-total" style="color:var(--ok)" id="rCashTotal">$0</div></div>
+        <div class="card"><b>Estado de resultados</b><div class="muted" style="margin-bottom:16px">Operaciones de contado y crédito del periodo.</div><div class="list"><div class="list-item"><span>Ingresos Totales</span><b id="rIncome">$0</b></div><div class="list-item"><span>Costo de mercancía</span><b id="rCOGS">$0</b></div><div class="list-item"><span>Gastos operativos</span><b id="rExpenses">$0</b></div><div class="list-item" style="background:#f0fdf4;border-color:#bbf7d0"><span>Utilidad / Pérdida</span><b id="rProfit" style="color:var(--ok)">$0</b></div></div></div>
+        <div class="card"><b>Cartera y proveedores</b><div class="muted" style="margin-bottom:16px">Saldos pendientes a la fecha (no dependen del periodo).</div><div class="list"><div class="list-item"><span>Por cobrar a clientes</span><b id="rReceivable">$0</b></div><div class="list-item"><span>Por pagar a proveedores</span><b id="rPayable">$0</b></div><div class="list-item"><span>Deuda de gastos</span><b id="rExpDebt">$0</b></div></div></div>
+        <div class="card"><b>Efectivo disponible</b><div class="muted" style="margin-bottom:16px">Caja acumulada histórica (no depende del filtro de periodo).</div><div class="report-total" style="color:var(--ok)" id="rCashHistTotal">$0</div></div>
       </div>
     </section>
   </main>
@@ -233,42 +317,85 @@ td b{color:#111827}
 <button id="fabMic" class="fab-mic" title="Registrar por voz">🎙️</button>
 
 <script>
-const KEY='contavoz_state_v4';
+const KEY='contavoz_state_v5';
 const today=new Date().toISOString().slice(0,10);
+function addDays(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 
 const demoProducts=[
- {id:'1',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460},
- {id:'2',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780},
- {id:'3',name:'Café Mujeres Cafeteras en granos 454gr',stock:50,cost:45780,sale:65780},
- {id:'4',name:'Café Origen Nariño en granos 454gr',stock:50,cost:45780,sale:65780},
- {id:'5',name:'Café Colina en grano 454gr',stock:50,cost:36650,sale:56650}
+ {id:'1',name:'Café Volcán en granos 250gr',stock:50,cost:11460,sale:31460,minStock:15,expiry:addDays(today,180)},
+ {id:'2',name:'Café Finca en grano 454gr',stock:50,cost:45780,sale:65780,minStock:15,expiry:addDays(today,10)},
+ {id:'3',name:'Café Mujeres Cafeteras en granos 454gr',stock:50,cost:45780,sale:65780,minStock:15,expiry:''},
+ {id:'4',name:'Café Origen Nariño en granos 454gr',stock:8,cost:45780,sale:65780,minStock:15,expiry:''},
+ {id:'5',name:'Café Colina en grano 454gr',stock:50,cost:36650,sale:56650,minStock:15,expiry:''}
 ];
 const demoPurchases=[
- {id:'p1',date:today,productId:'1',qty:100,total:1146000,payment:'Efectivo',type:'Contado'},
- {id:'p2',date:today,productId:'2',qty:150,total:6867000,payment:'Nequi',type:'Contado'},
- {id:'p3',date:today,productId:'3',qty:200,total:9156000,payment:'Nequi',type:'Contado'},
- {id:'p4',date:today,productId:'4',qty:250,total:11445000,payment:'Crédito',type:'Crédito'},
- {id:'p5',date:today,productId:'5',qty:300,total:10995000,payment:'Crédito',type:'Crédito'}
+ {id:'p1',date:today,productId:'1',qty:100,total:1146000,payment:'Efectivo',type:'Contado',supplier:'Cooperativa Volcán'},
+ {id:'p2',date:today,productId:'2',qty:150,total:6867000,payment:'Nequi',type:'Contado',supplier:'Finca La Esperanza'},
+ {id:'p3',date:today,productId:'3',qty:200,total:9156000,payment:'Nequi',type:'Contado',supplier:'Mujeres Cafeteras'},
+ {id:'p4',date:today,productId:'4',qty:250,total:11445000,payment:'Crédito',type:'Crédito',supplier:'Origen Nariño SAS'},
+ {id:'p5',date:today,productId:'5',qty:300,total:10995000,payment:'Crédito',type:'Crédito',supplier:'Finca La Colina'}
 ];
 const demoSales=[
- {id:'s1',date:today,productId:'1',qty:50,total:1573000,payment:'Efectivo',type:'Contado'},
- {id:'s2',date:today,productId:'2',qty:100,total:6578000,payment:'Nequi',type:'Contado'},
- {id:'s3',date:today,productId:'3',qty:150,total:9867000,payment:'Nequi',type:'Contado'},
- {id:'s4',date:today,productId:'4',qty:200,total:13156000,payment:'Nequi',type:'Contado'},
- {id:'s5',date:today,productId:'5',qty:250,total:14162500,payment:'Crédito',type:'Crédito'}
+ {id:'s1',date:today,productId:'1',qty:50,total:1573000,payment:'Efectivo',type:'Contado',client:'Cliente mostrador'},
+ {id:'s2',date:today,productId:'2',qty:100,total:6578000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
+ {id:'s3',date:today,productId:'3',qty:150,total:9867000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
+ {id:'s4',date:today,productId:'4',qty:200,total:13156000,payment:'Nequi',type:'Contado',client:'Cliente mostrador'},
+ {id:'s5',date:today,productId:'5',qty:250,total:14162500,payment:'Crédito',type:'Crédito',client:'Tienda Don Jorge'}
 ];
 const demoExpenses=[
- ['Agua',100000],['Luz',70000],['Internet',150000],['Nomina',2000000],['Seguridad Social',500000],['Arriendo',2000000],['Útiles de Aseo',50000],['Vigilancia',70000]
-].map((x,i)=>({id:'e'+i,date:today,description:x[0],total:x[1],payment:'Nequi',type:'Contado'}));
+ ['Agua',100000,'Contado'],['Luz',70000,'Contado'],['Internet',150000,'Contado'],['Nomina',2000000,'Contado'],['Seguridad Social',500000,'Contado'],['Arriendo',2000000,'Crédito'],['Útiles de Aseo',50000,'Contado'],['Vigilancia',70000,'Contado']
+].map((x,i)=>({id:'e'+i,date:today,description:x[0],total:x[1],payment:x[2]==='Crédito'?'Crédito':'Nequi',type:x[2]}));
+const demoCollections=[
+ {id:'c1',date:today,client:'Tienda Don Jorge',amount:4000000,payment:'Nequi',note:'Primer abono'}
+];
+const demoSupplierPayments=[
+ {id:'sp1',date:today,supplier:'Origen Nariño SAS',amount:3000000,payment:'Transferencia',note:'Abono factura'}
+];
+const demoExpensePayments=[];
 
-function defaultState(){return {products:structuredClone(demoProducts),purchases:structuredClone(demoPurchases),sales:structuredClone(demoSales),expenses:structuredClone(demoExpenses)}}
+function defaultState(){return {
+ products:structuredClone(demoProducts),purchases:structuredClone(demoPurchases),sales:structuredClone(demoSales),
+ expenses:structuredClone(demoExpenses),collections:structuredClone(demoCollections),
+ supplierPayments:structuredClone(demoSupplierPayments),expensePayments:structuredClone(demoExpensePayments)
+}}
 let state=load();
-function load(){try{const x=JSON.parse(localStorage.getItem(KEY));return x||defaultState()}catch(e){return defaultState()}}
+function load(){
+ try{
+  const x=JSON.parse(localStorage.getItem(KEY));
+  if(!x) return defaultState();
+  x.collections=x.collections||[]; x.supplierPayments=x.supplierPayments||[]; x.expensePayments=x.expensePayments||[];
+  x.products.forEach(p=>{ if(p.minStock===undefined) p.minStock=10; if(p.expiry===undefined) p.expiry=''; });
+  return x;
+ }catch(e){return defaultState()}
+}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
 function product(id){return state.products.find(p=>p.id===id)}
 function sum(arr,key){return arr.reduce((a,x)=>a+(Number(x[key])||0),0)}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+// ---------- Filtro de periodo (diario / semanal / mensual / todo) ----------
+let periodState={ingresos:'dia',compras:'dia',gastos:'dia',reportes:'todo'};
+function inPeriod(dateStr,period){
+ if(period==='todo') return true;
+ const d=new Date(dateStr+'T00:00:00'), t=new Date(today+'T00:00:00');
+ if(period==='dia') return dateStr===today;
+ if(period==='semana'){ const diff=(t-d)/86400000; return diff>=0 && diff<7; }
+ if(period==='mes') return d.getFullYear()===t.getFullYear() && d.getMonth()===t.getMonth();
+ return true;
+}
+document.querySelectorAll('.period-tabs').forEach(group=>{
+ const key=group.dataset.periodGroup;
+ group.querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+   group.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+   btn.classList.add('active');
+   periodState[key]=btn.dataset.period;
+   render();
+  });
+ });
+});
+function daysUntil(dateStr){ if(!dateStr) return null; const d=new Date(dateStr+'T00:00:00'), t=new Date(today+'T00:00:00'); return Math.round((d-t)/86400000); }
 
 const pageMeta={
  dashboard:['Dashboard','Resumen financiero de tu negocio.'],
@@ -316,8 +443,11 @@ document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='
 function action(a){
  if(a==='new-sale') newSale(); if(a==='new-purchase') newPurchase();
  if(a==='new-expense') newExpense(); if(a==='new-product') newProduct();
+ if(a==='new-collection') newCollection(); if(a==='new-supplier-payment') newSupplierPayment();
+ if(a==='new-expense-payment') newExpensePayment();
 }
 function productOptions(){return state.products.map(p=>`<option value="${p.id}">${p.name} (Stock: ${p.stock})</option>`).join('')}
+const paymentOptions='<option>Efectivo</option><option>Nequi</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option>';
 
 function opForm(kind){
  const isSale=kind==='sale';
@@ -325,8 +455,9 @@ function opForm(kind){
   <div class="field full"><label>Producto</label><select id="fProduct" required>${productOptions()}</select></div>
   <div class="field"><label>Cantidad</label><input id="fQty" type="number" min="1" value="1" required></div>
   <div class="field"><label>Precio unitario</label><input id="fPrice" type="number" min="0" value="${isSale?state.products[0].sale:state.products[0].cost}" required></div>
-  <div class="field"><label>Forma de pago</label><select id="fPayment"><option>Efectivo</option><option>Nequi</option><option>Transferencia</option><option>Crédito</option></select></div>
+  <div class="field"><label>Forma de pago</label><select id="fPayment">${paymentOptions}</select></div>
   <div class="field"><label>Tipo</label><select id="fType"><option>Contado</option><option>Crédito</option></select></div>
+  <div class="field full"><label>${isSale?'Cliente (opcional)':'Proveedor (opcional)'}</label><input id="fParty" placeholder="${isSale?'Ej. Cliente mostrador':'Ej. Distribuidora XYZ'}"></div>
   <div class="field full"><label>Fecha</label><input id="fDate" type="date" value="${today}"></div>
   <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">${isSale?'Registrar venta':'Registrar compra'}</button></div>
  </form>`
@@ -338,7 +469,7 @@ function newExpense(){
  document.getElementById('modalBody').innerHTML=`<form id="expenseForm" class="form-grid">
  <div class="field full"><label>Descripción</label><input id="eDesc" placeholder="Ej. Recibo de Agua" required></div>
  <div class="field"><label>Valor</label><input id="eTotal" type="number" min="0" required></div>
- <div class="field"><label>Forma de pago</label><select id="ePayment"><option>Efectivo</option><option>Nequi</option><option>Crédito</option></select></div>
+ <div class="field"><label>Forma de pago</label><select id="ePayment">${paymentOptions}</select></div>
  <div class="field"><label>Fecha</label><input id="eDate" type="date" value="${today}"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar gasto</button></div></form>`;
  openModal('modal');
@@ -349,20 +480,88 @@ function newProduct(){
  document.getElementById('modalBody').innerHTML=`<form id="productForm" class="form-grid">
  <div class="field"><label>Código</label><input id="pId" required></div><div class="field"><label>Nombre</label><input id="pName" required></div>
  <div class="field"><label>Stock inicial</label><input id="pStock" type="number" min="0" value="0"></div><div class="field"><label>Costo unitario</label><input id="pCost" type="number" min="0" value="0"></div>
- <div class="field full"><label>Precio de Venta</label><input id="pSale" type="number" min="0" value="0"></div>
+ <div class="field"><label>Precio de Venta</label><input id="pSale" type="number" min="0" value="0"></div><div class="field"><label>Alerta de stock mínimo</label><input id="pMinStock" type="number" min="0" value="10"></div>
+ <div class="field full"><label>Fecha de vencimiento (opcional)</label><input id="pExpiry" type="date"></div>
  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Crear producto</button></div></form>`;
  openModal('modal');
- document.getElementById('productForm').onsubmit=e=>{e.preventDefault();if(product(pId.value))return showToast('Código ya existe');state.products.push({id:pId.value.trim(),name:pName.value.trim(),stock:+pStock.value,cost:+pCost.value,sale:+pSale.value});save();closeModal('modal');render();showToast('Producto creado')}
+ document.getElementById('productForm').onsubmit=e=>{e.preventDefault();if(product(pId.value))return showToast('Código ya existe');state.products.push({id:pId.value.trim(),name:pName.value.trim(),stock:+pStock.value,cost:+pCost.value,sale:+pSale.value,minStock:+pMinStock.value||0,expiry:pExpiry.value||''});save();closeModal('modal');render();showToast('Producto creado')}
+}
+function editProduct(id){
+ const p=product(id); if(!p) return;
+ document.getElementById('modalTitle').textContent='Editar producto: '+p.name;
+ document.getElementById('modalBody').innerHTML=`<form id="editProductForm" class="form-grid">
+ <div class="field full"><label>Nombre</label><input id="epName" value="${escapeHtml(p.name)}" required></div>
+ <div class="field"><label>Costo unitario</label><input id="epCost" type="number" min="0" value="${p.cost}"></div>
+ <div class="field"><label>Precio de Venta</label><input id="epSale" type="number" min="0" value="${p.sale}"></div>
+ <div class="field"><label>Alerta de stock mínimo</label><input id="epMinStock" type="number" min="0" value="${p.minStock||0}"></div>
+ <div class="field"><label>Fecha de vencimiento</label><input id="epExpiry" type="date" value="${p.expiry||''}"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Guardar cambios</button></div></form>`;
+ openModal('modal');
+ document.getElementById('editProductForm').onsubmit=e=>{e.preventDefault();p.name=epName.value.trim();p.cost=+epCost.value;p.sale=+epSale.value;p.minStock=+epMinStock.value||0;p.expiry=epExpiry.value||'';save();closeModal('modal');render();showToast('Producto actualizado')}
+}
+function adjustStock(id){
+ const p=product(id); if(!p) return;
+ document.getElementById('modalTitle').textContent='Ajuste de inventario: '+p.name;
+ document.getElementById('modalBody').innerHTML=`<form id="adjustForm" class="form-grid">
+ <div class="field full"><label>Motivo</label><select id="ajMotivo"><option>Inventario inicial</option><option>Compra sin factura</option><option>Ajuste / merma</option><option>Corrección de conteo</option></select></div>
+ <div class="field"><label>Movimiento</label><select id="ajTipo"><option value="in">Entrada (+)</option><option value="out">Salida (-)</option></select></div>
+ <div class="field"><label>Cantidad</label><input id="ajQty" type="number" min="1" value="1" required></div>
+ <div class="field full"><label>Stock actual: <b>${p.stock}</b></label></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Aplicar ajuste</button></div></form>`;
+ openModal('modal');
+ document.getElementById('adjustForm').onsubmit=e=>{
+  e.preventDefault();
+  const qty=+ajQty.value, delta = ajTipo.value==='in'?qty:-qty;
+  if(p.stock+delta<0){showToast('El ajuste dejaría el stock en negativo');return}
+  p.stock+=delta; save(); closeModal('modal'); render();
+  showToast('Inventario ajustado ('+ajMotivo.value+')');
+ }
+}
+function newCollection(){
+ document.getElementById('modalTitle').textContent='Registrar abono de cliente';
+ document.getElementById('modalBody').innerHTML=`<form id="collectionForm" class="form-grid">
+ <div class="field full"><label>Cliente</label><input id="clClient" placeholder="Ej. Tienda Don Jorge" required></div>
+ <div class="field"><label>Monto</label><input id="clAmount" type="number" min="0" required></div>
+ <div class="field"><label>Forma de pago</label><select id="clPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
+ <div class="field full"><label>Nota (opcional)</label><input id="clNote" placeholder="Ej. Abono factura #12"></div>
+ <div class="field full"><label>Fecha</label><input id="clDate" type="date" value="${today}"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar abono</button></div></form>`;
+ openModal('modal');
+ document.getElementById('collectionForm').onsubmit=e=>{e.preventDefault();state.collections.unshift({id:'c'+Date.now(),date:clDate.value,client:clClient.value.trim()||'Cliente general',amount:+clAmount.value,payment:clPayment.value,note:clNote.value.trim()});save();closeModal('modal');render();showToast('Abono registrado')}
+}
+function newSupplierPayment(){
+ document.getElementById('modalTitle').textContent='Registrar pago a proveedor';
+ document.getElementById('modalBody').innerHTML=`<form id="supplierForm" class="form-grid">
+ <div class="field full"><label>Proveedor</label><input id="spSupplier" placeholder="Ej. Distribuidora XYZ" required></div>
+ <div class="field"><label>Monto</label><input id="spAmount" type="number" min="0" required></div>
+ <div class="field"><label>Forma de pago</label><select id="spPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
+ <div class="field full"><label>Nota (opcional)</label><input id="spNote" placeholder="Ej. Abono factura #45"></div>
+ <div class="field full"><label>Fecha</label><input id="spDate" type="date" value="${today}"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar pago</button></div></form>`;
+ openModal('modal');
+ document.getElementById('supplierForm').onsubmit=e=>{e.preventDefault();state.supplierPayments.unshift({id:'sp'+Date.now(),date:spDate.value,supplier:spSupplier.value.trim()||'Proveedor general',amount:+spAmount.value,payment:spPayment.value,note:spNote.value.trim()});save();closeModal('modal');render();showToast('Pago a proveedor registrado')}
+}
+function newExpensePayment(){
+ document.getElementById('modalTitle').textContent='Registrar pago de gasto a crédito';
+ document.getElementById('modalBody').innerHTML=`<form id="expPayForm" class="form-grid">
+ <div class="field full"><label>Descripción del gasto</label><input id="epDesc" placeholder="Ej. Arriendo de agosto" required></div>
+ <div class="field"><label>Monto</label><input id="epAmount" type="number" min="0" required></div>
+ <div class="field"><label>Forma de pago</label><select id="epPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
+ <div class="field full"><label>Nota (opcional)</label><input id="epNote" placeholder="Ej. Pago parcial"></div>
+ <div class="field full"><label>Fecha</label><input id="epDate2" type="date" value="${today}"></div>
+ <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar pago</button></div></form>`;
+ openModal('modal');
+ document.getElementById('expPayForm').onsubmit=e=>{e.preventDefault();state.expensePayments.unshift({id:'ep'+Date.now(),date:epDate2.value,description:epDesc.value.trim()||'Gasto general',amount:+epAmount.value,payment:epPayment.value,note:epNote.value.trim()});save();closeModal('modal');render();showToast('Pago de gasto registrado')}
 }
 
 document.addEventListener('submit',e=>{
  if(e.target.id==='opForm'){
   e.preventDefault();
   const isSale=document.getElementById('modalTitle').textContent.includes('venta');
-  const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price;
+  const pid=fProduct.value,qty=+fQty.value,price=+fPrice.value,p=product(pid),total=qty*price,party=fParty.value.trim();
   if(isSale && qty>p.stock){showToast('Stock insuficiente');return}
-  if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock-=qty}
-  else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value});p.stock+=qty}
+  if(isSale){state.sales.unshift({id:'s'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value,client:party||'Cliente mostrador'});p.stock-=qty}
+  else{state.purchases.unshift({id:'p'+Date.now(),date:fDate.value,productId:pid,qty,total,payment:fPayment.value,type:fType.value,supplier:party||'Proveedor general'});p.stock+=qty}
   save();closeModal('modal');render();showToast(isSale?'Venta registrada':'Compra registrada')
  }
 });
@@ -372,24 +571,97 @@ function del(type,id){
  if(type==='sale'){const x=state.sales.find(v=>v.id===id);if(x)product(x.productId).stock+=x.qty;state.sales=state.sales.filter(v=>v.id!==id)}
  if(type==='purchase'){const x=state.purchases.find(v=>v.id===id);if(x)product(x.productId).stock-=x.qty;state.purchases=state.purchases.filter(v=>v.id!==id)}
  if(type==='expense')state.expenses=state.expenses.filter(v=>v.id!==id);
+ if(type==='collection')state.collections=state.collections.filter(v=>v.id!==id);
+ if(type==='supplierPayment')state.supplierPayments=state.supplierPayments.filter(v=>v.id!==id);
+ if(type==='expensePayment')state.expensePayments=state.expensePayments.filter(v=>v.id!==id);
  save();render();showToast('Registro eliminado')
 }
 
 function render(){
- const salesTotal=sum(state.sales,'total'), purchaseTotal=sum(state.purchases,'total'), expTotal=sum(state.expenses,'total');
+ // ---- Totales globales (histórico, no dependen del periodo) ----
+ const salesTotal=sum(state.sales,'total'), expTotal=sum(state.expenses,'total');
  const cogs=state.sales.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), profit=salesTotal-cogs-expTotal;
  kpiSales.textContent=money(salesTotal);kpiCosts.textContent=money(cogs);kpiExpenses.textContent=money(expTotal);kpiProfit.textContent=money(profit);
- const receivable=sum(state.sales.filter(x=>x.type==='Crédito'),'total'), payable=sum(state.purchases.filter(x=>x.type==='Crédito'),'total');
- const cashIn=sum(state.sales.filter(x=>x.payment!=='Crédito'),'total');
- const cashOut=sum(state.purchases.filter(x=>x.payment!=='Crédito'),'total')+sum(state.expenses.filter(x=>x.payment!=='Crédito'),'total');
- dashReceivable.textContent=money(receivable);dashPayable.textContent=money(payable);dashCash.textContent=money(cashIn-cashOut);
- 
- dashInventory.innerHTML=state.products.slice(0,5).map(p=>`<div class="list-item"><div><b>${p.name}</b></div><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock} unid.</span></div>`).join('');
- salesBody.innerHTML=state.sales.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay ventas registradas</td></tr>`;
- purchaseBody.innerHTML=state.purchases.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="7" class="empty">No hay compras registradas</td></tr>`;
- expenseBody.innerHTML=state.expenses.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay gastos registrados</td></tr>`;
- inventoryCards.innerHTML=state.products.map(p=>`<div class="card" style="box-shadow:none; padding:16px"><div style="display:flex;justify-content:space-between;gap:8px; margin-bottom:12px"><b>${p.name}</b><span class="badge ${p.stock<=10?'danger':p.stock<=25?'warn':'ok'}">${p.stock}</span></div><div class="muted" style="font-size:12px">Costo: ${money(p.cost)}<br>Venta: ${money(p.sale)}</div></div>`).join('');
- rCashIn.textContent=money(cashIn);rCashOut.textContent=money(cashOut);rCashTotal.textContent=money(cashIn-cashOut);rIncome.textContent=money(salesTotal);rCOGS.textContent=money(cogs);rExpenses.textContent=money(expTotal);rProfit.textContent=money(profit);
+
+ const totalReceivable=sum(state.sales.filter(x=>x.type==='Crédito'),'total')-sum(state.collections,'amount');
+ const totalPayable=sum(state.purchases.filter(x=>x.type==='Crédito'),'total')-sum(state.supplierPayments,'amount');
+ const totalExpDebt=sum(state.expenses.filter(x=>x.type==='Crédito'),'total')-sum(state.expensePayments,'amount');
+ const histCashIn=sum(state.sales.filter(x=>x.payment!=='Crédito'),'total')+sum(state.collections,'amount');
+ const histCashOut=sum(state.purchases.filter(x=>x.payment!=='Crédito'),'total')+sum(state.expenses.filter(x=>x.payment!=='Crédito'),'total')+sum(state.supplierPayments,'amount')+sum(state.expensePayments,'amount');
+ dashReceivable.textContent=money(Math.max(0,totalReceivable));dashPayable.textContent=money(Math.max(0,totalPayable));dashCash.textContent=money(histCashIn-histCashOut);
+ rCashHistTotal.textContent=money(histCashIn-histCashOut);
+ rReceivable.textContent=money(Math.max(0,totalReceivable));rPayable.textContent=money(Math.max(0,totalPayable));rExpDebt.textContent=money(Math.max(0,totalExpDebt));
+
+ // ---- Alertas de inventario: bajo stock y próximos a vencer ----
+ const lowStockItems=state.products.filter(p=>p.stock<=(p.minStock||10));
+ const expiringItems=state.products.filter(p=>p.expiry && daysUntil(p.expiry)!==null && daysUntil(p.expiry)<=15);
+ let alertsHtml='';
+ if(lowStockItems.length){
+  alertsHtml+=`<div class="alert-banner danger"><div>⚠️<b>Bajo stock</b>${lowStockItems.length} producto(s) por debajo del mínimo configurado.<div class="chips">${lowStockItems.map(p=>`<span class="chip">${p.name}: ${p.stock} unid.</span>`).join('')}</div></div></div>`;
+ }
+ if(expiringItems.length){
+  alertsHtml+=`<div class="alert-banner warn"><div>⏳<b>Próximos a vencer</b>${expiringItems.length} producto(s) vencen en 15 días o menos (o ya vencieron).<div class="chips">${expiringItems.map(p=>{const d=daysUntil(p.expiry);return `<span class="chip">${p.name}: ${d<0?'vencido hace '+Math.abs(d)+'d':d+'d'}</span>`}).join('')}</div></div></div>`;
+ }
+ dashAlerts.innerHTML=alertsHtml;
+ inventoryAlerts.innerHTML=alertsHtml||`<div class="empty" style="margin-bottom:16px">Sin alertas de inventario por ahora.</div>`;
+
+ dashInventory.innerHTML=state.products.slice(0,5).map(p=>`<div class="list-item"><div><b>${p.name}</b></div><span class="badge ${p.stock<=(p.minStock||10)?'danger':p.stock<=(p.minStock||10)*2?'warn':'ok'}">${p.stock} unid.</span></div>`).join('');
+
+ // ---- Ingresos (con filtro de periodo) ----
+ const perIng=periodState.ingresos;
+ const salesP=state.sales.filter(s=>inPeriod(s.date,perIng));
+ const collectionsP=state.collections.filter(c=>inPeriod(c.date,perIng));
+ ingPeriodTotal.textContent=money(sum(salesP,'total'));
+ ingPeriodAbonos.textContent=money(sum(collectionsP,'amount'));
+ ingCartera.textContent=money(Math.max(0,totalReceivable));
+ salesBody.innerHTML=salesP.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="8" class="empty">No hay ventas en este periodo</td></tr>`;
+ collectionsBody.innerHTML=collectionsP.map(c=>`<tr><td>${c.date}</td><td><b>${c.client}</b></td><td>${money(c.amount)}</td><td>${c.payment}</td><td>${c.note||'—'}</td><td><button class="btn btn-danger" onclick="del('collection','${c.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay abonos en este periodo</td></tr>`;
+
+ // ---- Compras (con filtro de periodo) ----
+ const perCom=periodState.compras;
+ const purchasesP=state.purchases.filter(s=>inPeriod(s.date,perCom));
+ const supplierPaymentsP=state.supplierPayments.filter(sp=>inPeriod(sp.date,perCom));
+ comPeriodTotal.textContent=money(sum(purchasesP,'total'));
+ comPeriodPagos.textContent=money(sum(supplierPaymentsP,'amount'));
+ comPorPagar.textContent=money(Math.max(0,totalPayable));
+ purchaseBody.innerHTML=purchasesP.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="8" class="empty">No hay compras en este periodo</td></tr>`;
+ supplierPaymentsBody.innerHTML=supplierPaymentsP.map(sp=>`<tr><td>${sp.date}</td><td><b>${sp.supplier}</b></td><td>${money(sp.amount)}</td><td>${sp.payment}</td><td>${sp.note||'—'}</td><td><button class="btn btn-danger" onclick="del('supplierPayment','${sp.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
+
+ // ---- Gastos (con filtro de periodo) ----
+ const perGas=periodState.gastos;
+ const expensesP=state.expenses.filter(x=>inPeriod(x.date,perGas));
+ const expensePaymentsP=state.expensePayments.filter(ep=>inPeriod(ep.date,perGas));
+ gasPeriodTotal.textContent=money(sum(expensesP,'total'));
+ gasPeriodPagos.textContent=money(sum(expensePaymentsP,'amount'));
+ gasPorPagar.textContent=money(Math.max(0,totalExpDebt));
+ expenseBody.innerHTML=expensesP.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay gastos en este periodo</td></tr>`;
+ expensePaymentsBody.innerHTML=expensePaymentsP.map(ep=>`<tr><td>${ep.date}</td><td><b>${ep.description}</b></td><td>${money(ep.amount)}</td><td>${ep.payment}</td><td>${ep.note||'—'}</td><td><button class="btn btn-danger" onclick="del('expensePayment','${ep.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
+
+ // ---- Inventario ----
+ inventoryCards.innerHTML=state.products.map(p=>{
+  const d=p.expiry?daysUntil(p.expiry):null;
+  const expiryLabel=p.expiry?(d<0?`Vencido hace ${Math.abs(d)}d`:`Vence en ${d}d`):'Sin fecha registrada';
+  const expiryBadgeClass=d===null?'':(d<0?'danger':d<=15?'warn':'ok');
+  return `<div class="card" style="box-shadow:none; padding:16px">
+    <div style="display:flex;justify-content:space-between;gap:8px; margin-bottom:12px"><b>${p.name}</b><span class="badge ${p.stock<=(p.minStock||10)?'danger':p.stock<=(p.minStock||10)*2?'warn':'ok'}">${p.stock}</span></div>
+    <div class="muted" style="font-size:12px">Costo: ${money(p.cost)}<br>Venta: ${money(p.sale)}<br>Mínimo alerta: ${p.minStock||0} unid.<br>Vencimiento: ${p.expiry?`<span class="badge ${expiryBadgeClass}" style="padding:2px 8px">${expiryLabel}</span>`:expiryLabel}</div>
+    <div class="product-card-foot"><button class="btn btn-light" onclick="editProduct('${p.id}')">Editar</button><button class="btn btn-light" onclick="adjustStock('${p.id}')">Ajustar stock</button></div>
+   </div>`;
+ }).join('');
+
+ // ---- Reportes (con filtro de periodo propio) ----
+ const perRep=periodState.reportes;
+ const salesR=state.sales.filter(s=>inPeriod(s.date,perRep));
+ const purchasesR=state.purchases.filter(s=>inPeriod(s.date,perRep));
+ const expensesR=state.expenses.filter(x=>inPeriod(x.date,perRep));
+ const collectionsR=state.collections.filter(c=>inPeriod(c.date,perRep));
+ const supplierPaymentsR=state.supplierPayments.filter(sp=>inPeriod(sp.date,perRep));
+ const expensePaymentsR=state.expensePayments.filter(ep=>inPeriod(ep.date,perRep));
+ const salesTotalR=sum(salesR,'total'), cogsR=salesR.reduce((a,s)=>a+s.qty*product(s.productId).cost,0), expTotalR=sum(expensesR,'total');
+ const cashInR=sum(salesR.filter(x=>x.payment!=='Crédito'),'total')+sum(collectionsR,'amount');
+ const cashOutR=sum(purchasesR.filter(x=>x.payment!=='Crédito'),'total')+sum(expensesR.filter(x=>x.payment!=='Crédito'),'total')+sum(supplierPaymentsR,'amount')+sum(expensePaymentsR,'amount');
+ rCashIn.textContent=money(cashInR);rCashOut.textContent=money(cashOutR);rCashTotal.textContent=money(cashInR-cashOutR);
+ rIncome.textContent=money(salesTotalR);rCOGS.textContent=money(cogsR);rExpenses.textContent=money(expTotalR);rProfit.textContent=money(salesTotalR-cogsR-expTotalR);
 }
 render();
 
@@ -674,21 +946,58 @@ function processVoiceCommand(text){
  const n = normalizeStr(text);
  const voicePreview = document.getElementById('voicePreview');
  voicePreview.hidden = false;
- 
+
+ // El orden importa: las frases más específicas (abonos y pagos de deuda) se revisan
+ // antes que "gasto"/"compra"/"venta" para que no queden mal clasificadas.
  let kind = null;
- if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind = 'expense'; }
+ const mentionsProveedor = n.includes('proveedor');
+ const mentionsDeudaGasto = (n.includes('deuda') || n.includes('abono')) && n.includes('gasto');
+ if(mentionsProveedor && (n.includes('pago') || n.includes('pague') || n.includes('abono'))){ kind = 'supplier_payment'; }
+ else if(mentionsDeudaGasto){ kind = 'expense_payment'; }
+ else if(n.includes('abono') && (n.includes('cliente') || n.includes('me pago') || n.includes('me pagaron') || n.includes('recibi')) ){ kind = 'collection'; }
+ else if(n.includes('gasto') || n.includes('pague') || n.includes('pagar') || n.includes('recibo')){ kind = 'expense'; }
  else if(n.includes('compra') || n.includes('compre') || n.includes('comprar')){ kind = 'purchase'; }
  else if(n.includes('venta') || n.includes('vendi') || n.includes('vender')){ kind = 'sale'; }
 
  if(!kind){
-  voicePreview.innerHTML = `<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No identifiqué la acción.</b><br>Empieza diciendo "Vendí...", "Compré..." o "Gasto de...".</div>`;
+  voicePreview.innerHTML = `<div style="background:#fee2e2; padding:12px; border-radius:8px; color:var(--danger)"><b>No identifiqué la acción.</b><br>Empieza diciendo "Vendí...", "Compré...", "Gasto de...", "Abono de cliente...", "Pago a proveedor..." o "Pago de deuda de gasto...".</div>`;
   return;
  }
 
  let payment = 'Efectivo';
  if(n.includes('nequi')) payment = 'Nequi';
  else if(n.includes('transferencia')) payment = 'Transferencia';
+ else if(n.includes('tarjeta')) payment = 'Tarjeta';
  else if(n.includes('credito') || n.includes('debi')) payment = 'Crédito';
+
+ if(kind === 'collection' || kind === 'supplier_payment' || kind === 'expense_payment'){
+  const total = extractNumber(n);
+  if(total === 0){
+   voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Abono de cliente Don Jorge por 200000".</div>`;
+   return;
+  }
+  const nameMatch = text.match(/(?:de|al?|a la)\s+(?:cliente|proveedor)?\s*([a-zA-ZÀ-ÿ\s]+?)(?:\s+por|\s+de\s+\d|\s+\d|$)/i);
+  const spokenName = (nameMatch ? nameMatch[1].trim() : '') || '';
+  const meta = kind==='collection'
+   ? {label:'Abono de cliente',placeholder:'Nombre del cliente',cls:'ok',fn:'applyVoiceCollection'}
+   : kind==='supplier_payment'
+   ? {label:'Pago a proveedor',placeholder:'Nombre del proveedor',cls:'warn',fn:'applyVoiceSupplierPayment'}
+   : {label:'Pago de deuda de gasto',placeholder:'Descripción del gasto',cls:'warn',fn:'applyVoiceExpensePayment'};
+  voicePreview.innerHTML = `
+   <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+        <span class="badge ${meta.cls}">${meta.label}</span>
+        <b>${money(total)}</b>
+    </div>
+    <div class="field full" style="margin-bottom:12px; text-align:left">
+        <label>${meta.placeholder} (revisa y corrige si hace falta)</label>
+        <input id="voicePartyName" value="${escapeHtml(spokenName || (kind==='expense_payment' ? 'Gasto general' : 'General'))}">
+    </div>
+    <div style="color:var(--text); margin-bottom:16px"><b>Pago:</b> ${payment}</div>
+    <button class="btn btn-primary" style="width:100%" onclick='${meta.fn}(${total},"${payment}")'>Confirmar</button>
+   </div>`;
+  return;
+ }
 
  if(kind === 'expense'){
   const category = findExpenseCategory(n);
@@ -783,6 +1092,22 @@ function applyVoiceExpenseFromPreview(total, payment){
 function applyVoiceExpense(desc,total,payment){
  state.expenses.unshift({id:'e'+Date.now(),date:today,description:desc,total,payment,type:payment==='Crédito'?'Crédito':'Contado'});
  save(); render(); closeModal('voiceModal'); showToast('Gasto registrado por voz');
+}
+
+function applyVoiceCollection(total,payment){
+ const name=(document.getElementById('voicePartyName')?.value.trim())||'Cliente general';
+ state.collections.unshift({id:'c'+Date.now(),date:today,client:name,amount:total,payment,note:'Registrado por voz'});
+ save(); render(); closeModal('voiceModal'); showToast('Abono de cliente registrado por voz');
+}
+function applyVoiceSupplierPayment(total,payment){
+ const name=(document.getElementById('voicePartyName')?.value.trim())||'Proveedor general';
+ state.supplierPayments.unshift({id:'sp'+Date.now(),date:today,supplier:name,amount:total,payment,note:'Registrado por voz'});
+ save(); render(); closeModal('voiceModal'); showToast('Pago a proveedor registrado por voz');
+}
+function applyVoiceExpensePayment(total,payment){
+ const desc=(document.getElementById('voicePartyName')?.value.trim())||'Gasto general';
+ state.expensePayments.unshift({id:'ep'+Date.now(),date:today,description:desc,amount:total,payment,note:'Registrado por voz'});
+ save(); render(); closeModal('voiceModal'); showToast('Pago de deuda de gasto registrado por voz');
 }
 
 function applyVoiceOp(kind,pid,qty,amount,payment){
