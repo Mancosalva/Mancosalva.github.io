@@ -659,7 +659,14 @@ function fuzzyFindProduct(text){
 }
 
 function extractNumber(text, defaultVal = 0) {
-    const nums = text.replace(/\$/g,'').replace(/\./g,'').replace(/,/g,'.').match(/\d+(?:\.\d+)?/g);
+    // Los montos de esta app son pesos colombianos SIN decimales. El reconocedor de voz a
+    // veces devuelve los números grandes con coma como separador de miles ("500,000") y
+    // otras veces con punto ("500.000"), sin que dependa de nuestro idioma configurado.
+    // Antes tratábamos la coma como separador decimal, así que "500,000" se convertía en
+    // 500.000 = 500. Ahora quitamos CUALQUIER punto o coma que esté entre dígitos, sin
+    // asumir cuál de los dos es el separador de miles.
+    const cleaned = text.replace(/\$/g,'').replace(/(\d)[.,](\d)/g, '$1$2').replace(/(\d)[.,](\d)/g, '$1$2');
+    const nums = cleaned.match(/\d+/g);
     return nums ? Number(nums[nums.length-1]) : defaultVal;
 }
 
