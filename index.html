@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ContaVoz — Gestión inteligente para microempresas</title>
 <meta name="description" content="ContaVoz: PMV para registrar ingresos, compras, gastos, inventario y reportes mediante voz.">
+<!-- Agregamos Chart.js para las gráficas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root{
   --bg:#f4f7f6; --surface:#ffffff; --surface2:#eef2f7; --text:#111827; --muted:#4b5563;
@@ -91,6 +93,7 @@ td b{color:#111827}
 .sidebar-close{display:none}
 .drawer-backdrop{position:fixed;inset:0;background:rgba(17,24,39,0.55);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:55}
 .drawer-backdrop.open{opacity:1;pointer-events:auto}
+.chart-container{position:relative; height:250px; width:100%; margin-top:16px}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2,.cols-3{grid-template-columns:1fr}}
 
 /* ---- Modo móvil: portátil u horizontal (celulares) ---- */
@@ -305,11 +308,42 @@ td b{color:#111827}
         </div>
       </div>
       <div class="grid cols-2">
-        <div class="card"><b>Flujo de caja</b><div class="muted" style="margin-bottom:16px">Entradas y salidas efectivas en el periodo seleccionado (incluye abonos y pagos de deuda).</div><div class="grid cols-2"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><span class="muted">Flujo neto del periodo</span><div class="report-total" style="color:var(--ok)" id="rCashTotal">$0</div></div>
+        <div class="card"><b>Flujo de caja</b><div class="muted" style="margin-bottom:16px">Entradas y salidas efectivas en el periodo.</div><div class="grid cols-2"><div><span class="muted">Efectivo recibido</span><div class="report-total" id="rCashIn">$0</div></div><div><span class="muted">Efectivo pagado</span><div class="report-total" id="rCashOut">$0</div></div></div><hr style="border:0;border-top:1px solid var(--border);margin:24px 0"><span class="muted">Flujo neto del periodo</span><div class="report-total" style="color:var(--ok)" id="rCashTotal">$0</div></div>
         <div class="card"><b>Estado de resultados</b><div class="muted" style="margin-bottom:16px">Operaciones de contado y crédito del periodo.</div><div class="list"><div class="list-item"><span>Ingresos Totales</span><b id="rIncome">$0</b></div><div class="list-item"><span>Costo de mercancía</span><b id="rCOGS">$0</b></div><div class="list-item"><span>Gastos operativos</span><b id="rExpenses">$0</b></div><div class="list-item" style="background:#f0fdf4;border-color:#bbf7d0"><span>Utilidad / Pérdida</span><b id="rProfit" style="color:var(--ok)">$0</b></div></div></div>
-        <div class="card"><b>Cartera y proveedores</b><div class="muted" style="margin-bottom:16px">Saldos pendientes a la fecha (no dependen del periodo).</div><div class="list"><div class="list-item"><span>Por cobrar a clientes</span><b id="rReceivable">$0</b></div><div class="list-item"><span>Por pagar a proveedores</span><b id="rPayable">$0</b></div><div class="list-item"><span>Deuda de gastos</span><b id="rExpDebt">$0</b></div></div></div>
-        <div class="card"><b>Efectivo disponible</b><div class="muted" style="margin-bottom:16px">Caja acumulada histórica (no depende del filtro de periodo).</div><div class="report-total" style="color:var(--ok)" id="rCashHistTotal">$0</div></div>
+        <div class="card"><b>Cartera y proveedores</b><div class="muted" style="margin-bottom:16px">Saldos pendientes a la fecha (históricos).</div><div class="list"><div class="list-item"><span>Por cobrar a clientes</span><b id="rReceivable">$0</b></div><div class="list-item"><span>Por pagar a proveedores</span><b id="rPayable">$0</b></div><div class="list-item"><span>Deuda de gastos</span><b id="rExpDebt">$0</b></div></div></div>
+        <div class="card"><b>Efectivo disponible</b><div class="muted" style="margin-bottom:16px">Caja acumulada histórica (no depende del filtro).</div><div class="report-total" style="color:var(--ok)" id="rCashHistTotal">$0</div></div>
       </div>
+      
+      <!-- NUEVAS GRÁFICAS E INFORMACIÓN EXTRA -->
+      <div class="grid cols-2" style="margin-top:20px">
+        <div class="card">
+          <b>Ingresos vs Egresos</b>
+          <div class="muted" style="margin-bottom:16px">Comparativa de tu flujo operativo</div>
+          <div class="chart-container"><canvas id="chartFlujo"></canvas></div>
+        </div>
+        <div class="card">
+          <b>Gastos por Categoría</b>
+          <div class="muted" style="margin-bottom:16px">Distribución de los gastos en el periodo</div>
+          <div class="chart-container"><canvas id="chartGastos"></canvas></div>
+        </div>
+      </div>
+      <div class="grid cols-2" style="margin-top:20px">
+        <div class="card">
+          <b>Productos más vendidos</b>
+          <div class="muted" style="margin-bottom:16px">Top 5 productos por cantidad de ventas</div>
+          <div class="chart-container"><canvas id="chartTopProductos"></canvas></div>
+        </div>
+        <div class="card">
+          <b>Valor del Inventario (Actual)</b>
+          <div class="muted" style="margin-bottom:16px">Capital inmovilizado en mercancía y proyección</div>
+          <div class="list">
+            <div class="list-item"><span>Costo total (Inversión en stock)</span><b id="rInvCost">$0</b></div>
+            <div class="list-item"><span>Venta total (Proyección de ingresos)</span><b id="rInvSale">$0</b></div>
+            <div class="list-item" style="background:#eff6ff;border-color:#bfdbfe"><span>Ganancia potencial esperada</span><b id="rInvProfit" style="color:#1d4ed8">$0</b></div>
+          </div>
+        </div>
+      </div>
+
     </section>
   </main>
 </div>
@@ -397,7 +431,6 @@ function load(){
   if(!x) return defaultState();
   x.collections=x.collections||[]; x.supplierPayments=x.supplierPayments||[]; x.expensePayments=x.expensePayments||[];
   x.products.forEach(p=>{ if(p.minStock===undefined) p.minStock=10; if(p.expiry===undefined) p.expiry=''; });
-  // Migración para asignar debtId a pagos antiguos basados en nombres coincidentes
   migrateLegacyPayments(x);
   return x;
  }catch(e){return defaultState()}
@@ -467,7 +500,7 @@ function go(section){
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.section)));
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>action(b.dataset.action)));
 
-// ---------- MENÚ MÓVIL: panel lateral (drawer) que funciona igual en vertical y horizontal ----------
+// ---------- MENÚ MÓVIL ----------
 const sidebarEl = document.querySelector('.sidebar');
 const drawerBackdrop = document.getElementById('drawerBackdrop');
 const menuBtn = document.getElementById('menuBtn');
@@ -482,7 +515,6 @@ if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeDrawer);
 drawerBackdrop.addEventListener('click', closeDrawer);
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click', closeDrawer));
 
-// Si el usuario gira el celular o cambia de tamaño y ya no está en modo móvil, cerramos el panel
 window.addEventListener('resize', ()=>{ if(window.innerWidth>900) closeDrawer(); });
 window.addEventListener('orientationchange', closeDrawer);
 document.getElementById('resetBtn').onclick=()=>{if(confirm('¿Restaurar datos?')){state=defaultState();save();render();showToast('Datos reiniciados')}}
@@ -683,7 +715,6 @@ function del(type,id){
  save();render();showToast('Registro eliminado')
 }
 
-
 function getNotifications(){
  const items=[];
  const add=(id,icon,title,text,section,cls='warn')=>items.push({id,icon,title,text,section,cls});
@@ -712,6 +743,11 @@ const notificationBtn=document.getElementById('notificationBtn');
 if(notificationBtn)notificationBtn.addEventListener('click',e=>{e.stopPropagation();document.getElementById('notificationPanel').classList.toggle('open')});
 document.addEventListener('click',e=>{if(!e.target.closest('#notificationArea'))document.getElementById('notificationPanel')?.classList.remove('open')});
 loadNotificationSeen();
+
+// --- Variables globales para guardar las instancias de gráficas ---
+let chartFlujoInst = null;
+let chartGastosInst = null;
+let chartTopProdInst = null;
 
 function render(){
  // ---- Totales globales (histórico, no dependen del periodo) ----
@@ -847,6 +883,102 @@ function render(){
  rCashIn.textContent=money(cashInR);rCashOut.textContent=money(cashOutR);rCashTotal.textContent=money(cashInR-cashOutR);
  rIncome.textContent=money(salesTotalR);rCOGS.textContent=money(cogsR);rExpenses.textContent=money(expTotalR);rProfit.textContent=money(salesTotalR-cogsR-expTotalR);
  renderNotifications();
+
+ // ---- Preparar Datos para Gráficas ----
+ 
+ // 1. Valor del inventario (Dinero en mercancía)
+ let invCost = 0, invSale = 0;
+ state.products.forEach(p => {
+    if (p.stock > 0) {
+        invCost += (p.stock * p.cost);
+        invSale += (p.stock * p.sale);
+    }
+ });
+ document.getElementById('rInvCost').textContent = money(invCost);
+ document.getElementById('rInvSale').textContent = money(invSale);
+ document.getElementById('rInvProfit').textContent = money(invSale - invCost);
+
+ // Solo dibujamos si Chart.js cargó correctamente
+ if (typeof Chart !== 'undefined') {
+    // Destruir instancias viejas para que no se superpongan visualmente al actualizar
+    if(chartFlujoInst) chartFlujoInst.destroy();
+    if(chartGastosInst) chartGastosInst.destroy();
+    if(chartTopProdInst) chartTopProdInst.destroy();
+
+    // 2. Gráfica de Ingresos vs Compras vs Gastos
+    const ctxFlujo = document.getElementById('chartFlujo').getContext('2d');
+    chartFlujoInst = new Chart(ctxFlujo, {
+        type: 'bar',
+        data: {
+            labels: ['Ventas', 'Compras', 'Gastos'],
+            datasets: [{
+                label: 'Monto COP',
+                data: [salesTotalR, sum(purchasesR, 'total'), expTotalR],
+                backgroundColor: ['#059669', '#d3a537', '#dc2626'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 3. Gráfica de Gastos por Categoría (Anillo)
+    const gastosMap = {};
+    expensesR.forEach(ex => {
+        gastosMap[ex.description] = (gastosMap[ex.description] || 0) + ex.total;
+    });
+    const expLabels = Object.keys(gastosMap);
+    const expData = Object.values(gastosMap);
+    const ctxGastos = document.getElementById('chartGastos').getContext('2d');
+    
+    chartGastosInst = new Chart(ctxGastos, {
+        type: 'doughnut',
+        data: {
+            labels: expLabels.length ? expLabels : ['Sin gastos'],
+            datasets: [{
+                data: expLabels.length ? expData : [1],
+                backgroundColor: expLabels.length 
+                    ? ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#22d3ee', '#818cf8', '#c084fc'] 
+                    : ['#e5e7eb'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 4. Gráfica Top 5 Productos más vendidos
+    const prodSalesMap = {};
+    salesR.forEach(s => {
+        prodSalesMap[s.productId] = (prodSalesMap[s.productId] || 0) + s.qty;
+    });
+    const topProds = Object.entries(prodSalesMap)
+        .sort((a, b) => b[1] - a[1]) // Mayor a menor
+        .slice(0, 5) // Tomar los 5 primeros
+        .map(([id, qty]) => ({ name: product(id).name, qty }));
+
+    const ctxTop = document.getElementById('chartTopProductos').getContext('2d');
+    chartTopProdInst = new Chart(ctxTop, {
+        type: 'bar',
+        data: {
+            labels: topProds.length ? topProds.map(p => p.name.substring(0, 15) + '...') : ['Sin ventas'],
+            datasets: [{
+                label: 'Unidades',
+                data: topProds.length ? topProds.map(p => p.qty) : [0],
+                backgroundColor: '#113f2e',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Convertir la gráfica a barras horizontales
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+ }
 }
 render();
 
@@ -873,15 +1005,6 @@ function updateTranscriptView(){
  }
 }
 
-// ---------- Medidor de nivel de micrófono en vivo (independiente del texto reconocido) ----------
-// Esto confirma con certeza si el micrófono está captando sonido, incluso si el
-// reconocimiento de texto tarda en mostrar resultados.
-// ---------- Indicador de nivel, basado en los eventos REALES del reconocedor ----------
-// IMPORTANTE: ya no abrimos un getUserMedia propio para esto. Antes lo hacíamos, pero
-// eso competía por el micrófono con SpeechRecognition y en varios celulares le quitaba
-// el audio al reconocedor (por eso la barra se movía pero el texto nunca aparecía).
-// Ahora la barra se mueve solo cuando el MOTOR DE VOZ detecta audio/sonido/habla,
-// así que si se mueve, es garantía real de que el reconocedor está recibiendo audio.
 function setMicBar(pct, pulse){
  const bar = document.getElementById('micLevelBar');
  if(!bar) return;
@@ -892,8 +1015,8 @@ function setMicBar(pct, pulse){
 if(SpeechRecognition){
  recognition = new SpeechRecognition();
  recognition.lang = 'es-CO';
- recognition.interimResults = true; // muestra el texto en vivo mientras hablas (si el navegador lo soporta)
- recognition.continuous = true;     // no corta en la primera pausa breve; tú decides cuándo termina con "Confirmar"
+ recognition.interimResults = true;
+ recognition.continuous = true;
  recognition.maxAlternatives = 1;
 
  recognition.onstart = () => {
@@ -914,7 +1037,6 @@ if(SpeechRecognition){
   }, MAX_LISTEN_MS);
  };
 
- // Etapas de diagnóstico: así sabes exactamente en dónde se traba
  recognition.onaudiostart = () => {
   document.getElementById('voiceStatusTitle').textContent = '🎙️ Micrófono activo. Habla y toca Confirmar al terminar';
   document.getElementById('voiceTranscript').textContent = 'Habla ahora, de corrido...';
