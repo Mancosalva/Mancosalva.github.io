@@ -165,6 +165,48 @@ td b{color:#111827}
 .debt-select{width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:13px;cursor:pointer}
 .debt-select:hover{background:var(--surface2)}
 @media(max-width:600px){.notification-panel{position:fixed;right:16px;top:76px;width:calc(100vw - 32px)}}
+
+
+/* ===== Fresh Mobile Ledger redesign ===== */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root{
+ --bg:#FAFCFA;--surface:#fff;--surface2:#EFF4FF;--text:#0F172A;--muted:#64748B;
+ --primary:#10B981;--primary2:#0F766E;--accent:#F59E0B;--danger:#F43F5E;--ok:#10B981;
+ --border:rgba(16,185,129,.10);--shadow:0 4px 16px -2px rgba(16,185,129,.06),0 2px 6px -1px rgba(15,23,42,.03);--radius:24px
+}
+body{font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;background:linear-gradient(135deg,#FAFCFA 0%,#F8F9FF 60%,#F0FDF4 100%);font-weight:500}
+.sidebar{background:linear-gradient(180deg,#064E3B,#0F766E);width:276px;padding:26px 18px;border-right:1px solid rgba(255,255,255,.08)}
+.logo{background:linear-gradient(135deg,#6FFBBE,#10B981);color:#064E3B;border-radius:18px;box-shadow:0 8px 22px rgba(16,185,129,.28)}
+.brand h1{font-weight:800}.nav{gap:6px}.nav button{color:#BFE5D6;border-radius:16px;padding:14px 15px}
+.nav button.active,.nav button:hover{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.sidebar-footer{border-radius:18px;background:rgba(255,255,255,.08);color:#D8F5E8}
+.content{max-width:1320px;padding:36px}.topbar h2{font-family:"Plus Jakarta Sans";font-weight:800;font-size:32px}.topbar p{color:var(--muted)}
+.card{border:1px solid var(--border);box-shadow:var(--shadow);border-radius:24px;padding:22px;background:rgba(255,255,255,.92)}
+.hero{background:linear-gradient(135deg,#0F766E,#10B981);border-radius:28px;box-shadow:0 18px 40px -14px rgba(16,185,129,.4)}
+.hero::after{width:360px;height:360px;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 68%)}
+.hero h3{font-size:30px}.btn{border-radius:16px;padding:11px 18px;min-height:44px;font-weight:700}
+.btn-primary{background:#10B981;box-shadow:0 8px 18px -8px rgba(16,185,129,.65)}.btn-primary:hover{background:#0F766E}
+.btn-light{border-color:#E2E8F0;background:#fff}.btn-gold{background:#F59E0B}
+.kpis{gap:18px}.kpi{align-items:center}.kpi-icon{width:52px;height:52px;border-radius:18px;background:#F0FDF4}
+.kpi:nth-child(2) .kpi-icon{background:#EFF6FF}.kpi:nth-child(3) .kpi-icon{background:#FFF1F2}.kpi:nth-child(4) .kpi-icon{background:#ECFDF5}
+.kpi small{text-transform:none;letter-spacing:0;color:#64748B}.kpi strong{font-variant-numeric:tabular-nums}
+.period-tabs{background:#F1F5F9;border-radius:999px;padding:5px}.period-tabs button{border-radius:999px;padding:8px 15px}.period-tabs button.active{color:#0F766E}
+.list{gap:10px}.list-item{border:0;border-radius:16px;background:#FAFCFA;padding:15px}
+.table-wrap{border:1px solid #EDF2F7;border-radius:18px}th{background:#F8FAFC;color:#64748B}tr:last-child td{border-bottom:0}
+.field input,.field select{border:1.5px solid #E2E8F0;border-radius:14px;padding:13px;background:#F8FAFC}.field input:focus,.field select:focus{border-color:#10B981;box-shadow:0 0 0 4px rgba(16,185,129,.10)}
+.modal{background:rgba(15,23,42,.55)}.modal-box{border-radius:28px;box-shadow:0 25px 60px rgba(15,23,42,.22)}
+.fab-mic{width:68px;height:68px;background:#10B981;color:#fff;box-shadow:0 8px 24px -2px rgba(16,185,129,.45)}.fab-mic:hover{background:#0F766E}
+.fab-mic.listening{background:#F43F5E;box-shadow:0 0 0 8px rgba(244,63,94,.18),0 8px 24px rgba(244,63,94,.4)}
+.voice-text,#voiceResultBox{background:#F0FDF4!important;border-color:#A7F3D0!important}
+.notification-btn{border-radius:16px}.badge.ok{background:#D1FAE5;color:#065F46}.badge.warn{background:#FEF3C7;color:#92400E}.badge.danger{background:#FFE4E6;color:#9F1239}
+.report-total{font-variant-numeric:tabular-nums}.chart-container{padding-top:4px}
+
+@media(max-width:900px){
+ .content{padding:20px 16px 90px}.topbar h2{font-size:26px}.card{border-radius:20px;padding:18px}.hero{border-radius:24px}.hero h3{font-size:24px}
+ .fab-mic{bottom:20px;right:20px}
+}
+
 </style>
 </head>
 <body>
