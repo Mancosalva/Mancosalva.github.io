@@ -1356,14 +1356,33 @@ function extractNumber(text, defaultVal = 0) {
     const wordVal = wordsToNumber(normalized);
     return wordVal !== null ? wordVal : defaultVal;
 }
-function extractClientName(text){
- const patterns=[
-   /(?:cliente|para)\s+([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s]{2,}?)(?=\s+(?:por|de|en|con|pago|efectivo|nequi|transferencia|tarjeta|credito)|$)/i,
-   /(?:a nombre de)\s+([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s]{2,}?)(?=\s+(?:por|de|en|con)|$)/i
- ];
- for(const p of patterns){ const m=String(text).match(p); if(m) return m[1].trim(); }
+// Extrae nombres NUEVOS directamente de la frase, sin necesidad de que existan previamente.
+// Ej.: "Venta de 10 unidades Café Volcán a Tienda Doña Lucía"
+//      "Compré 20 Café Volcán a Distribuidora La Esperanza"
+function cleanPartyName(value){
+ return String(value||'')
+  .replace(/^(?:la|el)\s+/i,'')
+  .replace(/\s+(?:por|valor|total|de)\s+\$?[\d.,]+.*$/i,'')
+  .replace(/\s+(?:en|con)\s+(?:efectivo|nequi|transferencia|tarjeta|credito).*$/i,'')
+  .replace(/[.,;:]+$/,'').replace(/\s+/g,' ').trim();
+}
+function extractPartyName(text, kind){
+ const t=String(text||'').trim();
+ const markers = kind==='sale'
+  ? ['cliente','para','a nombre de',' a ']
+  : ['proveedor','a proveedor','comprado a','compre a','compré a',' a '];
+ for(const marker of markers){
+   const escaped=marker.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').trim();
+   // " a " se usa como marcador final; exige al menos dos caracteres para evitar falsos positivos.
+   const re=new RegExp('(?:^|\\s)'+escaped+'\\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\\s]{1,}?)'+
+     '(?=\\s+(?:por|valor|total|en efectivo|en nequi|con nequi|efectivo|nequi|transferencia|tarjeta|credito|crédito)\\b|$)','i');
+   const m=t.match(re);
+   if(m && cleanPartyName(m[1]).length>=2) return cleanPartyName(m[1]);
+ }
  return '';
 }
+function extractClientName(text){ return extractPartyName(text,'sale'); }
+function extractSupplierName(text){ return extractPartyName(text,'purchase'); }
 
 function processVoiceCommand(text){
  const n = normalizeStr(text);
@@ -1485,7 +1504,7 @@ function processVoiceCommand(text){
         <b>Detalle:</b> ${qty} unid. a ${money(amount)} c/u<br>
         <b>Método:</b> ${payment}
     </div>
-    ${kind==='sale'?`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Cliente <span class="muted">(opcional)</span></label><input id="voiceClientName" placeholder="Ej. Tienda Don Jorge" value="${escapeHtml(extractClientName(text))}"></div>`:''}
+    ${kind==='sale'?`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Cliente <span class="muted">(detectado por voz)</span></label><input id="voiceClientName" placeholder="Ej. Tienda Doña Lucía" value="${escapeHtml(extractClientName(text))}"></div>`:`<div class="field full" style="margin-bottom:14px;text-align:left"><label>Proveedor <span class="muted">(detectado por voz)</span></label><input id="voiceSupplierName" placeholder="Ej. Distribuidora La Esperanza" value="${escapeHtml(extractSupplierName(text))}"></div>`}
     <button class="btn btn-primary" style="width:100%" onclick='applyVoiceOp("${kind}","${p.id}",${qty},${amount},"${payment}")'>Confirmar Operación</button>
    </div>`;
 }
@@ -1533,7 +1552,10 @@ function applyVoiceOp(kind,pid,qty,amount,payment){
      const client=(clientInput?.value.trim()) || 'Cliente mostrador';
      state.sales.unshift({id:'s'+Date.now(),date:today,productId:pid,qty,total,payment,type,client}); p.stock -= qty;
  } else {
-     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type}); p.stock += qty;
+     const supplierInput=document.getElementById('voiceSupplierName');
+     const supplier=(supplierInput?.value.trim()) || 'Proveedor general';
+     // El proveedor queda guardado directamente en la compra aunque sea completamente nuevo.
+     state.purchases.unshift({id:'p'+Date.now(),date:today,productId:pid,qty,total,payment,type,supplier}); p.stock += qty;
  }
  save(); render(); closeModal('voiceModal'); showToast((kind==='sale'?'Venta':'Compra')+' registrada por voz');
 }
