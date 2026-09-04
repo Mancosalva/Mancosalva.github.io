@@ -617,6 +617,35 @@ function restartVoice() {
 
 function normalizeStr(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
+// Categorías de gasto reconocidas por voz. El orden importa: las más específicas van
+// primero para que "seguridad social" no quede capturada por la palabra suelta "seguridad"
+// (que pertenece a Vigilancia).
+const expenseCategories = [
+ { name:'Seguridad Social', keys:['seguridad social','eps','pension','planilla'] },
+ { name:'Nómina',           keys:['nomina','sueldo','salario','empleado','empleados','pago de personal'] },
+ { name:'Arriendo',         keys:['arriendo','alquiler del local','alquiler'] },
+ { name:'Vigilancia',       keys:['vigilancia','seguridad privada'] },
+ { name:'Agua',             keys:['agua','acueducto'] },
+ { name:'Luz',              keys:['luz','electricidad','energia'] },
+ { name:'Internet',         keys:['internet','wifi'] },
+ { name:'Útiles de Aseo',   keys:['aseo','limpieza','utiles de aseo'] },
+ { name:'Transporte',       keys:['transporte','gasolina','domicilio','domicilios'] },
+ { name:'Papelería',        keys:['papeleria','utiles de oficina'] },
+ { name:'Mantenimiento',    keys:['mantenimiento','reparacion','reparaciones'] },
+ { name:'Publicidad',       keys:['publicidad','marketing','pauta'] },
+ { name:'Impuestos',        keys:['impuesto','impuestos','iva'] },
+];
+const expenseCategoryNames = expenseCategories.map(c => c.name);
+
+function findExpenseCategory(normalizedText){
+ for(const cat of expenseCategories){
+  for(const key of cat.keys){
+   if(normalizedText.includes(normalizeStr(key))) return cat.name;
+  }
+ }
+ return null;
+}
+
 function fuzzyFindProduct(text){
  const n = normalizeStr(text);
  const keywords = {
@@ -655,24 +684,44 @@ function processVoiceCommand(text){
  else if(n.includes('credito') || n.includes('debi')) payment = 'Crédito';
 
  if(kind === 'expense'){
+  const category = findExpenseCategory(n);
   const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
-  let desc = descMatch ? descMatch[1].trim() : 'Gasto general';
+  const spokenDesc = (descMatch ? descMatch[1].trim() : '') || 'Gasto general';
   const total = extractNumber(n);
-  
+
   if(total === 0){
       voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Gasto de luz por 50000".</div>`;
       return;
   }
 
+  const isCustom = !category;
   voicePreview.innerHTML = `
    <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
         <span class="badge danger">Gasto Operativo</span>
         <b>${money(total)}</b>
     </div>
-    <div style="color:var(--text); margin-bottom:16px"><b>Descripción:</b> ${desc}<br><b>Pago:</b> ${payment}</div>
-    <button class="btn btn-primary" style="width:100%" onclick='applyVoiceExpense("${desc}",${total},"${payment}")'>Confirmar Gasto</button>
+    <div class="field full" style="margin-bottom:10px; text-align:left">
+        <label>Categoría (revisa y corrige si hace falta)</label>
+        <select id="voiceExpenseCat">
+            ${expenseCategoryNames.map(c => `<option value="${c}" ${c===category?'selected':''}>${c}</option>`).join('')}
+            <option value="__custom__" ${isCustom ? 'selected' : ''}>Otro (personalizado)</option>
+        </select>
+    </div>
+    <div class="field full" id="voiceExpenseCustomWrap" style="margin-bottom:12px; text-align:left; display:${isCustom ? 'block' : 'none'}">
+        <label>Describe el gasto</label>
+        <input id="voiceExpenseCustomDesc" value="${escapeHtml(spokenDesc)}">
+    </div>
+    <div style="color:var(--text); margin-bottom:16px"><b>Pago:</b> ${payment}</div>
+    <button class="btn btn-primary" style="width:100%" onclick="applyVoiceExpenseFromPreview(${total},'${payment}')">Confirmar Gasto</button>
    </div>`;
+
+  const catSelect = document.getElementById('voiceExpenseCat');
+  if(catSelect){
+   catSelect.addEventListener('change', function(){
+    document.getElementById('voiceExpenseCustomWrap').style.display = this.value === '__custom__' ? 'block' : 'none';
+   });
+  }
   return;
  }
 
@@ -708,6 +757,20 @@ function processVoiceCommand(text){
     </div>
     <button class="btn btn-primary" style="width:100%" onclick='applyVoiceOp("${kind}","${p.id}",${qty},${amount},"${payment}")'>Confirmar Operación</button>
    </div>`;
+}
+
+function applyVoiceExpenseFromPreview(total, payment){
+ const sel = document.getElementById('voiceExpenseCat');
+ let desc = 'Gasto general';
+ if(sel){
+  if(sel.value === '__custom__'){
+   const custom = document.getElementById('voiceExpenseCustomDesc');
+   desc = (custom && custom.value.trim()) || 'Gasto general';
+  } else {
+   desc = sel.value;
+  }
+ }
+ applyVoiceExpense(desc, total, payment);
 }
 
 function applyVoiceExpense(desc,total,payment){
