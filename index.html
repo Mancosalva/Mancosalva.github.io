@@ -930,16 +930,68 @@ function fuzzyFindProduct(text){
  return null;
 }
 
+// Palabras numéricas en español (para cuando el reconocedor de voz transcribe el monto
+// como texto: "cien mil", "un millón doscientos mil", "treinta y cinco mil", etc.)
+// Las claves van sin tildes porque este texto siempre pasa por normalizeStr() antes.
+const numberWords = {
+    'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,'siete':7,'ocho':8,'nueve':9,
+    'diez':10,'once':11,'doce':12,'trece':13,'catorce':14,'quince':15,
+    'dieciseis':16,'diecisiete':17,'dieciocho':18,'diecinueve':19,
+    'veinte':20,'veintiuno':21,'veintiun':21,'veintidos':22,'veintitres':23,'veinticuatro':24,
+    'veinticinco':25,'veintiseis':26,'veintisiete':27,'veintiocho':28,'veintinueve':29,
+    'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,'setenta':70,'ochenta':80,'noventa':90,
+    'cien':100,'ciento':100,'doscientos':200,'trescientos':300,'cuatrocientos':400,'quinientos':500,
+    'seiscientos':600,'setecientos':700,'ochocientos':800,'novecientos':900
+};
+const numberScales = { 'mil':1000, 'millon':1000000, 'millones':1000000 };
+
+// Convierte un número escrito en palabras ("cien mil", "un millon doscientos mil") a entero.
+// Las palabras que no reconoce (nombres de producto, "pesos", "por", "y", etc.) se ignoran,
+// así que puede recibir la frase completa sin necesidad de aislar primero el monto.
+function wordsToNumber(text){
+    const words = text.split(/\s+/);
+    let total = 0, current = 0, found = false;
+    for(const w of words){
+        if(w in numberWords){
+            current += numberWords[w];
+            found = true;
+        } else if(w in numberScales){
+            total += (current || 1) * numberScales[w];
+            current = 0;
+            found = true;
+        }
+    }
+    total += current;
+    return found ? total : null;
+}
+
 function extractNumber(text, defaultVal = 0) {
     // Los montos de esta app son pesos colombianos SIN decimales. El reconocedor de voz a
-    // veces devuelve los números grandes con coma como separador de miles ("500,000") y
-    // otras veces con punto ("500.000"), sin que dependa de nuestro idioma configurado.
-    // Antes tratábamos la coma como separador decimal, así que "500,000" se convertía en
-    // 500.000 = 500. Ahora quitamos CUALQUIER punto o coma que esté entre dígitos, sin
-    // asumir cuál de los dos es el separador de miles.
-    const cleaned = text.replace(/\$/g,'').replace(/(\d)[.,](\d)/g, '$1$2').replace(/(\d)[.,](\d)/g, '$1$2');
+    // veces devuelve los números grandes con coma como separador de miles ("500,000"), otras
+    // veces con punto ("500.000"), otras con espacio ("500 000"), y a veces los dicta
+    // completamente en palabras ("cien mil"), sin que dependa de nuestro idioma configurado.
+    // Primero resolvemos combinaciones dígito + palabra escala ("20 mil" -> 20000, "2 millones" -> 2000000).
+    let pre = text
+        .replace(/(\d+)\s*millones\b/g, (_, d) => String(Number(d) * 1000000))
+        .replace(/(\d+)\s*millon\b/g, (_, d) => String(Number(d) * 1000000))
+        .replace(/(\d+)\s*mil\b/g, (_, d) => String(Number(d) * 1000));
+
+    // Luego quitamos CUALQUIER punto, coma o espacio que esté entre dígitos (separador de
+    // miles), sin asumir cuál de los tres se usó. Se repite hasta que no cambie más, para
+    // que también funcione con varios grupos ("1.000.000" o "1 000 000").
+    let cleaned = pre.replace(/\$/g,'');
+    let prev;
+    do {
+        prev = cleaned;
+        cleaned = cleaned.replace(/(\d)[.,\s](\d)/g, '$1$2');
+    } while(cleaned !== prev);
+
     const nums = cleaned.match(/\d+/g);
-    return nums ? Number(nums[nums.length-1]) : defaultVal;
+    if(nums) return Number(nums[nums.length-1]);
+
+    // Si no hay ningún dígito, intentamos leer el monto escrito completamente en palabras.
+    const wordVal = wordsToNumber(text);
+    return wordVal !== null ? wordVal : defaultVal;
 }
 
 function processVoiceCommand(text){
