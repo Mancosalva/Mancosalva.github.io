@@ -137,6 +137,31 @@ td b{color:#111827}
 .product-card-foot{display:flex;gap:8px;margin-top:12px}
 .product-card-foot .btn{flex:1;padding:8px;font-size:12px}
 @media(max-width:1050px){.mini-kpis{grid-template-columns:1fr}}
+
+/* ---------- Centro de notificaciones ---------- */
+.notification-area{position:relative}
+.notification-btn{position:relative;width:46px;height:46px;border:1px solid var(--border);background:var(--surface);border-radius:12px;font-size:22px;display:grid;place-items:center;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.notification-badge{position:absolute;right:-5px;top:-5px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+.notification-panel{position:absolute;right:0;top:54px;width:min(390px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 45px rgba(0,0,0,.18);z-index:70;display:none;overflow:hidden}
+.notification-panel.open{display:block;animation:fadeIn .18s ease}
+.notification-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--border)}
+.notification-head b{font-size:16px}
+.notification-list{max-height:430px;overflow:auto}
+.notification-item{display:flex;gap:12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--border);background:var(--surface);padding:15px 17px;color:var(--text);align-items:flex-start}
+.notification-item:hover{background:var(--surface2)}
+.notification-item .ni-icon{width:36px;height:36px;border-radius:10px;background:#fef3c7;display:grid;place-items:center;flex:0 0 auto}
+.notification-item.danger .ni-icon{background:#fee2e2}
+.notification-item.ok .ni-icon{background:#d1fae5}
+.notification-item b{display:block;margin-bottom:3px;font-size:13px}
+.notification-item span{font-size:12px;color:var(--muted);line-height:1.35}
+.notification-empty{padding:30px 20px;text-align:center;color:var(--muted);font-size:13px}
+.debt-card{border:1px solid var(--border);border-radius:12px;padding:13px;background:var(--surface);margin-top:8px}
+.debt-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(17,63,46,.08)}
+.debt-card .debt-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.debt-list{display:grid;gap:8px;max-height:260px;overflow:auto}
+.debt-select{width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:13px;cursor:pointer}
+.debt-select:hover{background:var(--surface2)}
+@media(max-width:600px){.notification-panel{position:fixed;right:16px;top:76px;width:calc(100vw - 32px)}}
 </style>
 </head>
 <body>
@@ -166,6 +191,13 @@ td b{color:#111827}
     <div class="topbar">
       <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Resumen financiero de tu negocio.</p></div>
       <div class="top-actions">
+        <div class="notification-area" id="notificationArea">
+          <button class="notification-btn" id="notificationBtn" aria-label="Notificaciones" title="Notificaciones">🔔<span class="notification-badge" id="notificationBadge" style="display:none">0</span></button>
+          <div class="notification-panel" id="notificationPanel">
+            <div class="notification-head"><b>Notificaciones</b><button class="btn btn-light" style="padding:6px 10px;font-size:12px" onclick="markNotificationsSeen()">Marcar leídas</button></div>
+            <div class="notification-list" id="notificationList"></div>
+          </div>
+        </div>
         <button class="btn btn-light" id="resetBtn">↺ Restaurar Datos</button>
       </div>
     </div>
@@ -208,7 +240,7 @@ td b{color:#111827}
           <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Cartera pendiente (total)</small><strong id="ingCartera">$0</strong></div><div class="kpi-icon">📇</div></div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Cliente</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="salesBody"></tbody></table></div>
-        <div class="subhead"><h4>Abonos de clientes</h4><button class="btn btn-light" data-action="new-collection">＋ Registrar abono</button></div>
+        <div class="subhead"><h4>Abonos de clientes</h4><span class="muted">Cada abono se aplica a una deuda concreta.</span><button class="btn btn-light" data-action="new-collection">＋ Registrar abono</button></div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="collectionsBody"></tbody></table></div>
       </div>
     </section>
@@ -230,7 +262,7 @@ td b{color:#111827}
           <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Por pagar (total)</small><strong id="comPorPagar">$0</strong></div><div class="kpi-icon">📇</div></div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cant.</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="purchaseBody"></tbody></table></div>
-        <div class="subhead"><h4>Pagos a proveedores</h4><button class="btn btn-light" data-action="new-supplier-payment">＋ Registrar pago</button></div>
+        <div class="subhead"><h4>Pagos a proveedores</h4><span class="muted">Cada pago se aplica a una compra a crédito.</span><button class="btn btn-light" data-action="new-supplier-payment">＋ Registrar pago</button></div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="supplierPaymentsBody"></tbody></table></div>
       </div>
     </section>
@@ -252,7 +284,7 @@ td b{color:#111827}
           <div class="card kpi" style="box-shadow:none;border:1px solid var(--border)"><div><small>Deuda de gastos (total)</small><strong id="gasPorPagar">$0</strong></div><div class="kpi-icon">📇</div></div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Total</th><th>Pago</th><th>Tipo</th><th></th></tr></thead><tbody id="expenseBody"></tbody></table></div>
-        <div class="subhead"><h4>Pagos de gastos a crédito</h4><button class="btn btn-light" data-action="new-expense-payment">＋ Registrar pago</button></div>
+        <div class="subhead"><h4>Pagos de gastos a crédito</h4><span class="muted">Cada pago reduce una deuda específica.</span><button class="btn btn-light" data-action="new-expense-payment">＋ Registrar pago</button></div>
         <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th><th>Pago</th><th>Nota</th><th></th></tr></thead><tbody id="expensePaymentsBody"></tbody></table></div>
       </div>
     </section>
@@ -365,8 +397,27 @@ function load(){
   if(!x) return defaultState();
   x.collections=x.collections||[]; x.supplierPayments=x.supplierPayments||[]; x.expensePayments=x.expensePayments||[];
   x.products.forEach(p=>{ if(p.minStock===undefined) p.minStock=10; if(p.expiry===undefined) p.expiry=''; });
+  // Migración para asignar debtId a pagos antiguos basados en nombres coincidentes
+  migrateLegacyPayments(x);
   return x;
  }catch(e){return defaultState()}
+}
+function migrateLegacyPayments(x){
+ const allocate=(debts,payments,partyKey)=>{
+  const used=new Set(payments.filter(p=>p.debtId).map(p=>p.id));
+  debts.forEach(d=>{
+   let paid=payments.filter(p=>p.debtId===d.id).reduce((a,p)=>a+(Number(p.amount)||0),0);
+   payments.filter(p=>!p.debtId && normalizeStr(p[partyKey]||'')===normalizeStr(d[partyKey]||'')).sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
+    if(used.has(p.id))return;
+    const remaining=Math.max(0,d.total-paid);
+    if(remaining<=0)return;
+    p.debtId=d.id; paid+=Math.min(Number(p.amount)||0,remaining); used.add(p.id);
+   });
+  });
+ };
+ allocate(x.sales.filter(d=>d.type==='Crédito'),x.collections,'client');
+ allocate(x.purchases.filter(d=>d.type==='Crédito'),x.supplierPayments,'supplier');
+ allocate(x.expenses.filter(d=>d.type==='Crédito'),x.expensePayments,'description');
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function money(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0)}
@@ -517,42 +568,97 @@ function adjustStock(id){
   showToast('Inventario ajustado ('+ajMotivo.value+')');
  }
 }
-function newCollection(){
- document.getElementById('modalTitle').textContent='Registrar abono de cliente';
- document.getElementById('modalBody').innerHTML=`<form id="collectionForm" class="form-grid">
- <div class="field full"><label>Cliente</label><input id="clClient" placeholder="Ej. Tienda Don Jorge" required></div>
- <div class="field"><label>Monto</label><input id="clAmount" type="number" min="0" required></div>
- <div class="field"><label>Forma de pago</label><select id="clPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
- <div class="field full"><label>Nota (opcional)</label><input id="clNote" placeholder="Ej. Abono factura #12"></div>
- <div class="field full"><label>Fecha</label><input id="clDate" type="date" value="${today}"></div>
- <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar abono</button></div></form>`;
- openModal('modal');
- document.getElementById('collectionForm').onsubmit=e=>{e.preventDefault();state.collections.unshift({id:'c'+Date.now(),date:clDate.value,client:clClient.value.trim()||'Cliente general',amount:+clAmount.value,payment:clPayment.value,note:clNote.value.trim()});save();closeModal('modal');render();showToast('Abono registrado')}
+function debtItems(type){
+ const list=[];
+ if(type==='client'){
+  state.sales.filter(x=>x.type==='Crédito').forEach(x=>{
+   const paid=sum(state.collections.filter(c=>c.debtId===x.id),'amount');
+   const remaining=Math.max(0,x.total-paid);
+   if(remaining>0) list.push({id:x.id,type:'client',party:x.client||'Cliente mostrador',date:x.date,total:x.total,paid,remaining,label:'Venta a crédito'});
+  });
+ }
+ if(type==='supplier'){
+  state.purchases.filter(x=>x.type==='Crédito').forEach(x=>{
+   const paid=sum(state.supplierPayments.filter(c=>c.debtId===x.id),'amount');
+   const remaining=Math.max(0,x.total-paid);
+   if(remaining>0) list.push({id:x.id,type:'supplier',party:x.supplier||'Proveedor general',date:x.date,total:x.total,paid,remaining,label:'Compra a crédito'});
+  });
+ }
+ if(type==='expense'){
+  state.expenses.filter(x=>x.type==='Crédito').forEach(x=>{
+   const paid=sum(state.expensePayments.filter(c=>c.debtId===x.id),'amount');
+   const remaining=Math.max(0,x.total-paid);
+   if(remaining>0) list.push({id:x.id,type:'expense',party:x.description||'Gasto general',date:x.date,total:x.total,paid,remaining,label:'Gasto a crédito'});
+  });
+ }
+ return list.sort((a,b)=>a.date.localeCompare(b.date));
 }
-function newSupplierPayment(){
- document.getElementById('modalTitle').textContent='Registrar pago a proveedor';
- document.getElementById('modalBody').innerHTML=`<form id="supplierForm" class="form-grid">
- <div class="field full"><label>Proveedor</label><input id="spSupplier" placeholder="Ej. Distribuidora XYZ" required></div>
- <div class="field"><label>Monto</label><input id="spAmount" type="number" min="0" required></div>
- <div class="field"><label>Forma de pago</label><select id="spPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
- <div class="field full"><label>Nota (opcional)</label><input id="spNote" placeholder="Ej. Abono factura #45"></div>
- <div class="field full"><label>Fecha</label><input id="spDate" type="date" value="${today}"></div>
- <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar pago</button></div></form>`;
- openModal('modal');
- document.getElementById('supplierForm').onsubmit=e=>{e.preventDefault();state.supplierPayments.unshift({id:'sp'+Date.now(),date:spDate.value,supplier:spSupplier.value.trim()||'Proveedor general',amount:+spAmount.value,payment:spPayment.value,note:spNote.value.trim()});save();closeModal('modal');render();showToast('Pago a proveedor registrado')}
+function getDebt(type,id){return debtItems(type).find(d=>d.id===id)||null}
+function debtOptions(type){
+ return debtItems(type).map(d=>`<option value="${d.id}">${escapeHtml(d.party)} — ${money(d.remaining)} pendiente (${d.date})</option>`).join('');
 }
-function newExpensePayment(){
- document.getElementById('modalTitle').textContent='Registrar pago de gasto a crédito';
- document.getElementById('modalBody').innerHTML=`<form id="expPayForm" class="form-grid">
- <div class="field full"><label>Descripción del gasto</label><input id="epDesc" placeholder="Ej. Arriendo de agosto" required></div>
- <div class="field"><label>Monto</label><input id="epAmount" type="number" min="0" required></div>
- <div class="field"><label>Forma de pago</label><select id="epPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
- <div class="field full"><label>Nota (opcional)</label><input id="epNote" placeholder="Ej. Pago parcial"></div>
- <div class="field full"><label>Fecha</label><input id="epDate2" type="date" value="${today}"></div>
- <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">Registrar pago</button></div></form>`;
- openModal('modal');
- document.getElementById('expPayForm').onsubmit=e=>{e.preventDefault();state.expensePayments.unshift({id:'ep'+Date.now(),date:epDate2.value,description:epDesc.value.trim()||'Gasto general',amount:+epAmount.value,payment:epPayment.value,note:epNote.value.trim()});save();closeModal('modal');render();showToast('Pago de gasto registrado')}
+function partyMatch(type,name){
+ const q=normalizeStr(name||'');
+ if(!q)return [];
+ return debtItems(type).filter(d=>normalizeStr(d.party).includes(q) || q.includes(normalizeStr(d.party)));
 }
+function paymentForm(type){
+ const meta=type==='client'
+  ? {title:'Registrar abono de cliente',party:'Cliente',placeholder:'Ej. Tienda Don Jorge',amount:'Monto del abono',button:'Registrar abono',paymentClass:'ok'}
+  : type==='supplier'
+  ? {title:'Registrar pago a proveedor',party:'Proveedor',placeholder:'Ej. Distribuidora XYZ',amount:'Monto del pago',button:'Registrar pago',paymentClass:'warn'}
+  : {title:'Registrar pago de deuda de gasto',party:'Descripción del gasto',placeholder:'Ej. Arriendo de agosto',amount:'Monto del pago',button:'Registrar pago',paymentClass:'warn'};
+ const debts=debtItems(type);
+ return `<form id="debtPaymentForm" class="form-grid">
+  <div class="field full"><label>${meta.party}</label><input id="debtParty" placeholder="${meta.placeholder}" required></div>
+  <div class="field full"><label>Deuda a pagar</label><select id="debtId" required><option value="">Selecciona una deuda pendiente</option>${debtOptions(type)}</select></div>
+  <div id="debtInfo" class="field full"></div>
+  <div class="field"><label>${meta.amount}</label><input id="debtAmount" type="number" min="1" required></div>
+  <div class="field"><label>Forma de pago</label><select id="debtPayment">${paymentOptions.replace('<option>Crédito</option>','')}</select></div>
+  <div class="field full"><label>Nota (opcional)</label><input id="debtNote" placeholder="Ej. Abono parcial"></div>
+  <div class="field full"><label>Fecha</label><input id="debtDate" type="date" value="${today}"></div>
+  <div class="form-actions full"><button type="button" class="btn btn-light" onclick="closeModal('modal')">Cancelar</button><button class="btn btn-primary">${meta.button}</button></div>
+ </form>`;
+}
+function setupDebtPaymentForm(type){
+ const form=document.getElementById('debtPaymentForm');
+ const idEl=document.getElementById('debtId'), amountEl=document.getElementById('debtAmount');
+ const partyEl=document.getElementById('debtParty'), info=document.getElementById('debtInfo');
+ function refresh(){
+  const d=getDebt(type,idEl.value);
+  if(!d){info.innerHTML=''; return}
+  partyEl.value=d.party;
+  amountEl.max=d.remaining; amountEl.placeholder='Máximo '+d.remaining; amountEl.value=Math.min(Number(amountEl.value)||d.remaining,d.remaining);
+  info.innerHTML=`<div class="debt-card selected"><div class="debt-row"><b>${escapeHtml(d.party)}</b><span class="badge warn">${money(d.remaining)} pendiente</span></div><div class="muted" style="margin-top:6px">${d.label} del ${d.date} · Total ${money(d.total)} · Pagado ${money(d.paid)}</div></div>`;
+ }
+ idEl.onchange=refresh;
+ partyEl.addEventListener('input',()=>{
+  const matches=partyMatch(type,partyEl.value);
+  if(matches.length===1){idEl.value=matches[0].id;refresh();}
+ });
+ form.onsubmit=e=>{
+  e.preventDefault();
+  const d=getDebt(type,idEl.value), amount=Number(amountEl.value);
+  if(!d)return showToast('Selecciona una deuda pendiente');
+  if(amount<=0)return showToast('Ingresa un valor válido');
+  if(amount>d.remaining)return showToast('El pago no puede superar la deuda pendiente');
+  const common={id:'x'+Date.now(),date:debtDate.value,amount,payment:debtPayment.value,note:debtNote.value.trim(),debtId:d.id};
+  if(type==='client')state.collections.unshift({...common,client:d.party,id:'c'+Date.now()});
+  if(type==='supplier')state.supplierPayments.unshift({...common,supplier:d.party,id:'sp'+Date.now()});
+  if(type==='expense')state.expensePayments.unshift({...common,description:d.party,id:'ep'+Date.now()});
+  save();closeModal('modal');render();showToast('Pago aplicado a la deuda seleccionada');
+ };
+}
+function openDebtPayment(type){
+ const titles={client:'Registrar abono de cliente',supplier:'Registrar pago a proveedor',expense:'Registrar pago de deuda de gasto'};
+ document.getElementById('modalTitle').textContent=titles[type];
+ document.getElementById('modalBody').innerHTML=paymentForm(type);
+ openModal('modal'); setupDebtPaymentForm(type);
+}
+function newCollection(){openDebtPayment('client')}
+function newSupplierPayment(){openDebtPayment('supplier')}
+function newExpensePayment(){openDebtPayment('expense')}
+
 
 document.addEventListener('submit',e=>{
  if(e.target.id==='opForm'){
@@ -576,6 +682,36 @@ function del(type,id){
  if(type==='expensePayment')state.expensePayments=state.expensePayments.filter(v=>v.id!==id);
  save();render();showToast('Registro eliminado')
 }
+
+
+function getNotifications(){
+ const items=[];
+ const add=(id,icon,title,text,section,cls='warn')=>items.push({id,icon,title,text,section,cls});
+ debtItems('client').forEach(d=>{if(daysSince(d.date)>=30)add('client-'+d.id,'👤','Cliente con deuda atrasada',`${d.party} lleva ${daysSince(d.date)} días con ${money(d.remaining)} pendiente.`,'ingresos','danger')});
+ debtItems('supplier').forEach(d=>{if(daysSince(d.date)>=30)add('supplier-'+d.id,'🏭','Pago a proveedor pendiente',`${d.party} lleva ${daysSince(d.date)} días con ${money(d.remaining)} pendiente.`,'compras','danger')});
+ debtItems('expense').forEach(d=>{if(daysSince(d.date)>=30)add('expense-'+d.id,'🧾','Deuda de gasto atrasada',`${d.party} lleva ${daysSince(d.date)} días con ${money(d.remaining)} pendiente.`,'gastos','danger')});
+ state.products.filter(p=>p.stock<=(p.minStock||10)).forEach(p=>add('stock-'+p.id,'📦','Stock bajo',`${p.name}: ${p.stock} unidades disponibles.`,'inventario','danger'));
+ state.products.filter(p=>p.expiry && daysUntil(p.expiry)<=15).forEach(p=>add('expiry-'+p.id,'⏳','Producto próximo a vencer',`${p.name}: ${p.expiry}.`,'inventario','warn'));
+ return items;
+}
+function daysSince(dateStr){const d=new Date(dateStr+'T00:00:00'),t=new Date(today+'T00:00:00');return Math.max(0,Math.floor((t-d)/86400000))}
+let notificationSeen=[];
+function loadNotificationSeen(){try{notificationSeen=JSON.parse(localStorage.getItem(KEY+'_notifications'))||[]}catch(e){notificationSeen=[]}}
+function markNotificationsSeen(){notificationSeen=getNotifications().map(n=>n.id);localStorage.setItem(KEY+'_notifications',JSON.stringify(notificationSeen));renderNotifications();showToast('Notificaciones marcadas como leídas')}
+function renderNotifications(){
+ const list=document.getElementById('notificationList'), badge=document.getElementById('notificationBadge'); if(!list||!badge)return;
+ const all=getNotifications(), unread=all.filter(n=>!notificationSeen.includes(n.id));
+ badge.textContent=unread.length;badge.style.display=unread.length?'grid':'none';
+ list.innerHTML=all.length?all.map(n=>`<button class="notification-item ${n.cls}" onclick="openNotification('${n.id}','${n.section}')"><span class="ni-icon">${n.icon}</span><span><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.text)}</span></span></button>`).join(''):`<div class="notification-empty">🎉 No tienes notificaciones pendientes.</div>`;
+}
+function openNotification(id,section){
+ if(!notificationSeen.includes(id)){notificationSeen.push(id);localStorage.setItem(KEY+'_notifications',JSON.stringify(notificationSeen))}
+ document.getElementById('notificationPanel')?.classList.remove('open'); go(section);
+}
+const notificationBtn=document.getElementById('notificationBtn');
+if(notificationBtn)notificationBtn.addEventListener('click',e=>{e.stopPropagation();document.getElementById('notificationPanel').classList.toggle('open')});
+document.addEventListener('click',e=>{if(!e.target.closest('#notificationArea'))document.getElementById('notificationPanel')?.classList.remove('open')});
+loadNotificationSeen();
 
 function render(){
  // ---- Totales globales (histórico, no dependen del periodo) ----
@@ -614,7 +750,23 @@ function render(){
  ingPeriodTotal.textContent=money(sum(salesP,'total'));
  ingPeriodAbonos.textContent=money(sum(collectionsP,'amount'));
  ingCartera.textContent=money(Math.max(0,totalReceivable));
- salesBody.innerHTML=salesP.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="8" class="empty">No hay ventas en este periodo</td></tr>`;
+ 
+ salesBody.innerHTML = salesP.map(s => {
+    let estadoHtml = `<span class="badge ok">Contado</span>`;
+    if (s.type === 'Crédito') {
+        const pagado = sum(state.collections.filter(c => c.debtId === s.id), 'amount');
+        const restante = Math.max(0, s.total - pagado);
+        if (restante === 0) {
+            estadoHtml = `<span class="badge ok">Pagado</span>`;
+        } else if (restante < s.total) {
+            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
+        } else {
+            estadoHtml = `<span class="badge warn">Crédito</span>`;
+        }
+    }
+    return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.client||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('sale','${s.id}')">Eliminar</button></td></tr>`;
+ }).join('') || `<tr><td colspan="8" class="empty">No hay ventas en este periodo</td></tr>`;
+ 
  collectionsBody.innerHTML=collectionsP.map(c=>`<tr><td>${c.date}</td><td><b>${c.client}</b></td><td>${money(c.amount)}</td><td>${c.payment}</td><td>${c.note||'—'}</td><td><button class="btn btn-danger" onclick="del('collection','${c.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay abonos en este periodo</td></tr>`;
 
  // ---- Compras (con filtro de periodo) ----
@@ -624,7 +776,23 @@ function render(){
  comPeriodTotal.textContent=money(sum(purchasesP,'total'));
  comPeriodPagos.textContent=money(sum(supplierPaymentsP,'amount'));
  comPorPagar.textContent=money(Math.max(0,totalPayable));
- purchaseBody.innerHTML=purchasesP.map(s=>`<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td><span class="badge ${s.type==='Crédito'?'warn':'ok'}">${s.type}</span></td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="8" class="empty">No hay compras en este periodo</td></tr>`;
+ 
+ purchaseBody.innerHTML = purchasesP.map(s => {
+    let estadoHtml = `<span class="badge ok">Contado</span>`;
+    if (s.type === 'Crédito') {
+        const pagado = sum(state.supplierPayments.filter(sp => sp.debtId === s.id), 'amount');
+        const restante = Math.max(0, s.total - pagado);
+        if (restante === 0) {
+            estadoHtml = `<span class="badge ok">Pagado</span>`;
+        } else if (restante < s.total) {
+            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
+        } else {
+            estadoHtml = `<span class="badge warn">Crédito</span>`;
+        }
+    }
+    return `<tr><td>${s.date}</td><td><b>${product(s.productId).name}</b></td><td>${s.supplier||'—'}</td><td>${s.qty}</td><td>${money(s.total)}</td><td>${s.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('purchase','${s.id}')">Eliminar</button></td></tr>`;
+ }).join('') || `<tr><td colspan="8" class="empty">No hay compras en este periodo</td></tr>`;
+ 
  supplierPaymentsBody.innerHTML=supplierPaymentsP.map(sp=>`<tr><td>${sp.date}</td><td><b>${sp.supplier}</b></td><td>${money(sp.amount)}</td><td>${sp.payment}</td><td>${sp.note||'—'}</td><td><button class="btn btn-danger" onclick="del('supplierPayment','${sp.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
  // ---- Gastos (con filtro de periodo) ----
@@ -634,7 +802,23 @@ function render(){
  gasPeriodTotal.textContent=money(sum(expensesP,'total'));
  gasPeriodPagos.textContent=money(sum(expensePaymentsP,'amount'));
  gasPorPagar.textContent=money(Math.max(0,totalExpDebt));
- expenseBody.innerHTML=expensesP.map(x=>`<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td><span class="badge ${x.type==='Crédito'?'warn':'ok'}">${x.type}</span></td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay gastos en este periodo</td></tr>`;
+ 
+ expenseBody.innerHTML = expensesP.map(x => {
+    let estadoHtml = `<span class="badge ok">Contado</span>`;
+    if (x.type === 'Crédito') {
+        const pagado = sum(state.expensePayments.filter(ep => ep.debtId === x.id), 'amount');
+        const restante = Math.max(0, x.total - pagado);
+        if (restante === 0) {
+            estadoHtml = `<span class="badge ok">Pagado</span>`;
+        } else if (restante < x.total) {
+            estadoHtml = `<span class="badge warn">Parcial (${money(restante)})</span>`;
+        } else {
+            estadoHtml = `<span class="badge warn">Crédito</span>`;
+        }
+    }
+    return `<tr><td>${x.date}</td><td><b>${x.description}</b></td><td>${money(x.total)}</td><td>${x.payment}</td><td>${estadoHtml}</td><td><button class="btn btn-danger" onclick="del('expense','${x.id}')">Eliminar</button></td></tr>`;
+ }).join('') || `<tr><td colspan="6" class="empty">No hay gastos en este periodo</td></tr>`;
+ 
  expensePaymentsBody.innerHTML=expensePaymentsP.map(ep=>`<tr><td>${ep.date}</td><td><b>${ep.description}</b></td><td>${money(ep.amount)}</td><td>${ep.payment}</td><td>${ep.note||'—'}</td><td><button class="btn btn-danger" onclick="del('expensePayment','${ep.id}')">Eliminar</button></td></tr>`).join('')||`<tr><td colspan="6" class="empty">No hay pagos en este periodo</td></tr>`;
 
  // ---- Inventario ----
@@ -662,6 +846,7 @@ function render(){
  const cashOutR=sum(purchasesR.filter(x=>x.payment!=='Crédito'),'total')+sum(expensesR.filter(x=>x.payment!=='Crédito'),'total')+sum(supplierPaymentsR,'amount')+sum(expensePaymentsR,'amount');
  rCashIn.textContent=money(cashInR);rCashOut.textContent=money(cashOutR);rCashTotal.textContent=money(cashInR-cashOutR);
  rIncome.textContent=money(salesTotalR);rCOGS.textContent=money(cogsR);rExpenses.textContent=money(expTotalR);rProfit.textContent=money(salesTotalR-cogsR-expTotalR);
+ renderNotifications();
 }
 render();
 
@@ -991,33 +1176,26 @@ function processVoiceCommand(text){
 
  if(kind === 'collection' || kind === 'supplier_payment' || kind === 'expense_payment'){
   const total = extractNumber(n);
-  if(total === 0){
-   voicePreview.innerHTML = `<div style="background:#fef3c7; padding:12px; border-radius:8px; color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Abono de cliente Don Jorge por 200000".</div>`;
-   return;
-  }
-  const nameMatch = text.match(/(?:de|al?|a la)\s+(?:cliente|proveedor)?\s*([a-zA-ZÀ-ÿ\s]+?)(?:\s+por|\s+de\s+\d|\s+\d|$)/i);
-  const spokenName = (nameMatch ? nameMatch[1].trim() : '') || '';
-  const meta = kind==='collection'
-   ? {label:'Abono de cliente',placeholder:'Nombre del cliente',cls:'ok',fn:'applyVoiceCollection'}
-   : kind==='supplier_payment'
-   ? {label:'Pago a proveedor',placeholder:'Nombre del proveedor',cls:'warn',fn:'applyVoiceSupplierPayment'}
-   : {label:'Pago de deuda de gasto',placeholder:'Descripción del gasto',cls:'warn',fn:'applyVoiceExpensePayment'};
-  voicePreview.innerHTML = `
-   <div style="padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-        <span class="badge ${meta.cls}">${meta.label}</span>
-        <b>${money(total)}</b>
-    </div>
-    <div class="field full" style="margin-bottom:12px; text-align:left">
-        <label>${meta.placeholder} (revisa y corrige si hace falta)</label>
-        <input id="voicePartyName" value="${escapeHtml(spokenName || (kind==='expense_payment' ? 'Gasto general' : 'General'))}">
-    </div>
-    <div style="color:var(--text); margin-bottom:16px"><b>Pago:</b> ${payment}</div>
-    <button class="btn btn-primary" style="width:100%" onclick='${meta.fn}(${total},"${payment}")'>Confirmar</button>
-   </div>`;
+  const debtType = kind==='collection'?'client':kind==='supplier_payment'?'supplier':'expense';
+  const matches = [];
+  const nameMatch = text.match(/(?:de|al?|a la)\s+(?:cliente|proveedor)?\s*([a-zA-ZÀ-ÿ0-9\s]+?)(?:\s+por|\s+de\s+\d|\s+\d|$)/i);
+  const spokenName=(nameMatch?nameMatch[1].trim():'');
+  if(spokenName) matches.push(...partyMatch(debtType,spokenName));
+  if(total===0){voicePreview.innerHTML=`<div style="background:#fef3c7;padding:12px;border-radius:8px;color:#92400e"><b>Falta el valor.</b><br>Ejemplo: "Pagar deuda de Tienda Don Jorge por 200000".</div>`;return;}
+  const all=debtItems(debtType);
+  const candidates=matches.length?matches:all;
+  const label=debtType==='client'?'Abono de cliente':debtType==='supplier'?'Pago a proveedor':'Pago de deuda de gasto';
+  const placeholder=debtType==='expense'?'Gasto':'Nombre';
+  voicePreview.innerHTML=`<div style="padding:16px;border:1px solid var(--border);border-radius:12px;background:#fff">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span class="badge ${debtType==='client'?'ok':'warn'}">${label}</span><b>${money(total)}</b></div>
+   ${candidates.length?`<div class="field full" style="text-align:left;margin-bottom:12px"><label>Selecciona la deuda a la que se aplicará el pago</label><select id="voiceDebtSelect" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">${candidates.map(d=>`<option value="${d.id}">${escapeHtml(d.party)} — pendiente ${money(d.remaining)} — ${d.date}</option>`).join('')}</select></div>`:
+   `<div style="background:#fee2e2;padding:12px;border-radius:8px;color:var(--danger);text-align:left">No encontré una deuda pendiente que coincida. Registra primero la deuda o revisa el nombre.</div>`}
+   <div class="field full" style="text-align:left;margin-bottom:12px"><label>${placeholder} (puedes corregirlo)</label><input id="voicePartyName" value="${escapeHtml((candidates[0]?.party)||spokenName||'')}"></div>
+   <div style="color:var(--text);margin-bottom:16px"><b>Pago:</b> ${payment}</div>
+   ${candidates.length?`<button class="btn btn-primary" style="width:100%" onclick='applyVoiceDebtPayment("${debtType}",${total},"${payment}")'>Confirmar y aplicar pago</button>`:''}
+  </div>`;
   return;
  }
-
  if(kind === 'expense'){
   const category = findExpenseCategory(n);
   const descMatch = text.match(/(?:gasto de|pago de|pagué|pagar)\s+([a-zA-Z\s]+?)(?:\s+por|\s+de|\s+[\d])/i);
@@ -1113,21 +1291,21 @@ function applyVoiceExpense(desc,total,payment){
  save(); render(); closeModal('voiceModal'); showToast('Gasto registrado por voz');
 }
 
-function applyVoiceCollection(total,payment){
- const name=(document.getElementById('voicePartyName')?.value.trim())||'Cliente general';
- state.collections.unshift({id:'c'+Date.now(),date:today,client:name,amount:total,payment,note:'Registrado por voz'});
- save(); render(); closeModal('voiceModal'); showToast('Abono de cliente registrado por voz');
+function applyVoiceDebtPayment(type,total,payment){
+ const sel=document.getElementById('voiceDebtSelect'), debtId=sel?.value;
+ const d=getDebt(type,debtId);
+ if(!d)return showToast('No se encontró la deuda seleccionada');
+ if(total>d.remaining)return showToast('El pago supera la deuda pendiente de '+money(d.remaining));
+ const name=(document.getElementById('voicePartyName')?.value.trim())||d.party;
+ if(type==='client')state.collections.unshift({id:'c'+Date.now(),date:today,client:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
+ if(type==='supplier')state.supplierPayments.unshift({id:'sp'+Date.now(),date:today,supplier:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
+ if(type==='expense')state.expensePayments.unshift({id:'ep'+Date.now(),date:today,description:name,amount:total,payment,note:'Registrado por voz',debtId:d.id});
+ save();render();closeModal('voiceModal');showToast('Pago aplicado correctamente a la deuda');
 }
-function applyVoiceSupplierPayment(total,payment){
- const name=(document.getElementById('voicePartyName')?.value.trim())||'Proveedor general';
- state.supplierPayments.unshift({id:'sp'+Date.now(),date:today,supplier:name,amount:total,payment,note:'Registrado por voz'});
- save(); render(); closeModal('voiceModal'); showToast('Pago a proveedor registrado por voz');
-}
-function applyVoiceExpensePayment(total,payment){
- const desc=(document.getElementById('voicePartyName')?.value.trim())||'Gasto general';
- state.expensePayments.unshift({id:'ep'+Date.now(),date:today,description:desc,amount:total,payment,note:'Registrado por voz'});
- save(); render(); closeModal('voiceModal'); showToast('Pago de deuda de gasto registrado por voz');
-}
+function applyVoiceCollection(total,payment){applyVoiceDebtPayment('client',total,payment)}
+function applyVoiceSupplierPayment(total,payment){applyVoiceDebtPayment('supplier',total,payment)}
+function applyVoiceExpensePayment(total,payment){applyVoiceDebtPayment('expense',total,payment)}
+
 
 function applyVoiceOp(kind,pid,qty,amount,payment){
  const p = product(pid), total = qty*amount, type = payment==='Crédito'?'Crédito':'Contado';
